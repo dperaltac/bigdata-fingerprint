@@ -13,6 +13,18 @@ public class ProcessInputFingerprints extends Configured implements Tool{
 	public static void main(String[] args) throws Exception {
 		System.exit(ToolRunner.run(new ProcessInputFingerprints(), args));
   	}
+	
+	public static void printUsage() {
+		System.err.println("Reads a file containing the minutiae of a set of fingerprints.\n"
+				+ "These fingerprints are typically used for input.\n"
+				+ "The local strucutres are computed and stored in a MapFile + InfoFile format, according to the given consolidation type.\n");
+		System.err.println("Usage: hadoop jar " + ProcessInputFingerprints.class.getName() + " [Options] <input xytl file>\n");
+		System.err.println("Options:");
+		System.err.println("\t-D matcher={LocalStructureJiang|LocalStructureCylinder}\tNo default");
+		System.err.println("\t-D PartialScore={PartialScoreJiang|PartialScoreLSS|PartialScoreLSSR}\tNo default");
+		System.err.println("\t-D MapFileName=<file> \tDefault: " + Util.MAPFILEDEFAULTNAME);
+		System.err.println("\t-D InfoFileName=<file>\tDefault: " + Util.INFOFILEDEFAULTNAME);
+	}
 
 	public int run(String[] arg0) throws Exception {
 	    
@@ -27,8 +39,8 @@ public class ProcessInputFingerprints extends Configured implements Tool{
 	     * Validate that all arguments were passed from the command line.
 	     */
 	    if (arg0.length != 1) {
-	      System.out.printf("Usage: ProcessInputFingerprints <input fingerprints>\n");
-	      System.exit(-1);
+	    	printUsage();
+	    	System.exit(-1);
 	    }
 	    
 	    /*

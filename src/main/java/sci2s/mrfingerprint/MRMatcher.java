@@ -17,6 +17,16 @@ public class MRMatcher extends Configured implements Tool{
 	public static void main(String[] args) throws Exception {
 		System.exit(ToolRunner.run(new MRMatcher(), args));
   	}
+	
+	public static void printUsage() {
+		System.err.println("Identifies the input fingerprints stored in the MapFile and InfoFile within the given template file.\n"
+				+ "The input fingerprints should be first computed with ProcessInputFingerprints.\n");
+		System.err.println("Usage: hadoop jar " + MRMatcher.class.getName() + " [Options] <local structure template file> <output dir>\n");
+		System.err.println("Options:");
+		System.err.println("\t-D PartialScore={PartialScoreJiang|PartialScoreLSS|PartialScoreLSSR}\tNo default");
+		System.err.println("\t-D MapFileName=<file> \tDefault: " + Util.MAPFILEDEFAULTNAME);
+		System.err.println("\t-D InfoFileName=<file>\tDefault: " + Util.INFOFILEDEFAULTNAME);
+	}
 
 	public int run(String[] arg0) throws Exception {
 	    
@@ -43,8 +53,8 @@ public class MRMatcher extends Configured implements Tool{
 	     * Validate that all arguments were passed from the command line.
 	     */
 	    if (arg0.length != 2) {
-	      System.out.printf("Usage: GenericMatcher <local structure files> <output dir>\n");
-	      System.exit(-1);
+	    	printUsage();
+	    	System.exit(-1);
 	    }
 	    
 	    /*
