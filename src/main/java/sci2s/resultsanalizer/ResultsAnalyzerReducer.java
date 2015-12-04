@@ -6,8 +6,6 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
-import com.google.common.collect.Ordering;
-
 
 public class ResultsAnalyzerReducer extends Reducer<Text, ScorePair, IntWritable, NullWritable> {
 	

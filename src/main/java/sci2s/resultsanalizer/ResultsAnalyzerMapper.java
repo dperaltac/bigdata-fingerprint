@@ -8,7 +8,12 @@ import org.apache.hadoop.mapreduce.Mapper;
 public class ResultsAnalyzerMapper extends
 		Mapper<Text, Text, Text, ScorePair> {
 
-	private ScorePair sp = new ScorePair();
+	private ScorePair sp;
+
+	@Override
+	protected void setup(Context context) throws IOException, InterruptedException {
+		sp = new ScorePair();
+	}
 
 	@Override
 	  public void map(Text key, Text value, Context context)

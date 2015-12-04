@@ -26,7 +26,7 @@ public class ResultsAnalyzerReducerDetailed extends Reducer<Text, ScorePair, Tex
 	public void reduce(Text key, Iterable<ScorePair> values, Context context) 
 			throws IOException, InterruptedException {
 
-		ScorePair bestpair = new ScorePair("culo", -1);
+		ScorePair bestpair = new ScorePair("none", -1);
 
 		for(ScorePair sp : values) {
 
