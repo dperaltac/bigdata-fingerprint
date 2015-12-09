@@ -74,7 +74,7 @@ public class MRMatcher extends Configured implements Tool{
 	     * Specify an easily-decipherable name for the job.
 	     * This job name will appear in reports and logs.
 	     */
-	    job.setJobName("GenericMatcher");
+	    job.setJobName("MRMatcher_" + conf.get("matcher") + "_" + conf.get("PartialScore"));
 
 	    FileInputFormat.addInputPath(job, new Path(arg0[0]));
 	    FileOutputFormat.setOutputPath(job, new Path(arg0[1] + System.currentTimeMillis()));
