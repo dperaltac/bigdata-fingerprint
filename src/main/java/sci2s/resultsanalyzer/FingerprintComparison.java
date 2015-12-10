@@ -1,4 +1,4 @@
-package sci2s.resultsanalizer;
+package sci2s.resultsanalyzer;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -34,6 +34,10 @@ public class FingerprintComparison {
 
 	public FingerprintComparison(String database) {
 		db = database;
+	}
+	
+	public String [] getTypes() {
+		return types;
 	}
 	
 	public String getType(String f) {

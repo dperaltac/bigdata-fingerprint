@@ -1,4 +1,4 @@
-package sci2s.resultsanalizer;
+package sci2s.resultsanalyzer;
 import java.io.IOException;
 
 import org.apache.hadoop.io.Text;

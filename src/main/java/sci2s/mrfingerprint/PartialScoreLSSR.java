@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.PriorityQueue;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.ArrayPrimitiveWritable;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
@@ -92,6 +91,16 @@ public class PartialScoreLSSR implements PartialScore {
 		}
 	}
 	
+	static protected class LocalMatchArray extends ArrayWritable {
+		public LocalMatchArray() {
+			super(LocalMatch.class);
+		}
+
+		public LocalMatchArray(LocalMatch [] values) {
+			super(LocalMatch.class, values);
+		}
+	}
+	
 	protected static final int DEFAULTSIZE = 200;
 	
 	protected static final Builder<LocalMatch> PriorityQueueBuilder = MinMaxPriorityQueue.orderedBy(LocalMatch.invertedComparator());
@@ -163,7 +172,7 @@ public class PartialScoreLSSR implements PartialScore {
 		templatesize.readFields(in);
 
 		// Read the local matches
-		ArrayWritable auxaw = new ArrayWritable(LocalMatch.class);
+		LocalMatchArray auxaw = new LocalMatchArray();
 		auxaw.readFields(in);
 		lmatches = (LocalMatch[]) auxaw.toArray();
 	}
@@ -172,7 +181,7 @@ public class PartialScoreLSSR implements PartialScore {
 		
 		templatesize.write(out);
 
-		ArrayWritable auxaw = new ArrayWritable(LocalMatch.class, lmatches);
+		LocalMatchArray auxaw = new LocalMatchArray(lmatches);
 		
 		if(lmatches.length == 0)
 			System.out.println("Empty");
