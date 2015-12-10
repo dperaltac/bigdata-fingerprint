@@ -20,4 +20,8 @@ public class LSJiangArray extends ArrayWritable {
 		super(LocalStructureJiang.class, values);
 	}
 
+	public LSJiangArray(LSJiangArray o) {
+		super(LocalStructureJiang.class, o.get());
+	}
+
 }

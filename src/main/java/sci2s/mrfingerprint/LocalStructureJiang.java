@@ -12,6 +12,10 @@ import org.apache.hadoop.io.ObjectWritable;
 
 public class LocalStructureJiang extends LocalStructure {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	public static final int NN = 2;
 	public static final double BL = 6*3*NN;
 	public static final double W[] = {1, 0.3*180/Math.PI, 0.3*180/Math.PI};
