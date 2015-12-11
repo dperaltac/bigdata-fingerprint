@@ -419,7 +419,7 @@ public class PartialScoreJiang implements PartialScore {
 		@SuppressWarnings("rawtypes")
 		WritableComparable key = (WritableComparable) ReflectionUtils.newInstance(infofile.getKeyClass(), conf);
 		
-		ArrayWritable value = new ArrayWritable(LocalStructureJiang.class);
+		ArrayWritable value = (new LocalStructureJiang().newArrayWritable());
 		
 		try {
 			while(infofile.next(key, value)) {
