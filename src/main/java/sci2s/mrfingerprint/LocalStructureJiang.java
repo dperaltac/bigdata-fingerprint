@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.StringTokenizer;
 
+import org.apache.hadoop.io.ArrayPrimitiveWritable;
 import org.apache.hadoop.io.ArrayWritable;
-import org.apache.hadoop.io.ObjectWritable;
 
 
 public class LocalStructureJiang extends LocalStructure {
@@ -124,7 +124,7 @@ public class LocalStructureJiang extends LocalStructure {
 
 		super.write(out);
 		
-		ObjectWritable ow = new ObjectWritable(fv);
+		ArrayPrimitiveWritable ow = new ArrayPrimitiveWritable(fv);
 		
 		ow.write(out);
 		minutia.write(out);
@@ -136,7 +136,7 @@ public class LocalStructureJiang extends LocalStructure {
 
 		super.readFields(in);
 		
-		ObjectWritable ow = new ObjectWritable(fv);
+		ArrayPrimitiveWritable ow = new ArrayPrimitiveWritable(fv);
 		
 		ow.readFields(in);
 		minutia.readFields(in);

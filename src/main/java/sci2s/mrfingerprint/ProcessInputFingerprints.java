@@ -97,6 +97,11 @@ public class ProcessInputFingerprints extends Configured implements Tool{
 
 		LocalStructure [][] inputls = LocalStructure.extractLocalStructuresFromFile(MatcherClass, file);
 		
+		if(inputls.length == 0) {
+			System.err.println("processInputFingerprints: no input local structures could be read");
+			return;
+		}
+		
 		// Sort the fingerprints by their ID, they will be easier to retrieve with the MapFile
 		Arrays.sort(inputls, new Comparator<LocalStructure[]>() {
 		    public int compare(LocalStructure[] a, LocalStructure[] b) {
@@ -113,10 +118,10 @@ public class ProcessInputFingerprints extends Configured implements Tool{
 	    try {
 	    	((PartialScore) Util.getClassFromProperty(conf, "PartialScore").newInstance()).saveInfoFile(inputls, conf);
 		} catch (InstantiationException e) {
-			System.err.print(e.getMessage());
+			System.err.println(e.getMessage());
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
-			System.err.print(e.getMessage());
+			System.err.println(e.getMessage());
 			e.printStackTrace();
 		}
 	}

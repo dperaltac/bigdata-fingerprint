@@ -368,12 +368,14 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 		});
     	
     	Text fpid = new Text();
+    	ArrayWritable aw = null;
 
 		for(LocalStructure [] ails : inputls) {
 			fpid.set(ails[0].getFpid());
 
 		    try {
-		    	lsmapfile.append(fpid, ails[0].newArrayWritable(ails));
+		    	aw = ails[0].newArrayWritable(ails);
+		    	lsmapfile.append(fpid, aw);
 			} catch (IOException e) {
 				System.err.println("LocalStructure.saveLSMapFile: unable to save fingerprint "
 						+ fpid.toString() + " in MapFile " + name + ": " + e.getMessage());

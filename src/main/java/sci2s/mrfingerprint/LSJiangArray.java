@@ -2,10 +2,11 @@ package sci2s.mrfingerprint;
 
 import org.apache.hadoop.io.ArrayWritable;
 
+//TODO maybe include a size field and function
 public class LSJiangArray extends ArrayWritable {
 
 	public LSJiangArray() {
-		super(LocalStructureCylinder.class);
+		super(LocalStructureJiang.class);
 	}
 
 	public LSJiangArray(String[] arg0) {

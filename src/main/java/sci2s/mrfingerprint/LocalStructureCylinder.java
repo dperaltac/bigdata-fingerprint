@@ -13,6 +13,10 @@ import org.apache.hadoop.io.BooleanWritable;
 
 public class LocalStructureCylinder extends LocalStructure {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	public static final int NS = 8;
 	public static final int ND = 6;
 	public static final int R = 70;

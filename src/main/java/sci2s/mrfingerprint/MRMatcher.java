@@ -64,17 +64,11 @@ public class MRMatcher extends Configured implements Tool{
 	     */
 	    job.setJarByClass(MRMatcher.class);
 	    
-	    
-	    /*
-	     * Process the input fingerprints
-	     */
-//	    processInputFingerprints(arg0[1], job);
-	    
 	    /*
 	     * Specify an easily-decipherable name for the job.
 	     * This job name will appear in reports and logs.
 	     */
-	    job.setJobName("MRMatcher_" + conf.get("matcher") + "_" + conf.get("PartialScore"));
+	    job.setJobName("MRMatcher_" + conf.get("PartialScore") + "_" + arg0[0].substring(arg0[0].lastIndexOf('/')));
 
 	    FileInputFormat.addInputPath(job, new Path(arg0[0]));
 	    FileOutputFormat.setOutputPath(job, new Path(arg0[1] + System.currentTimeMillis()));
