@@ -6,10 +6,10 @@ import org.apache.hadoop.mapreduce.Reducer;
 
 
 public class ResultsAnalyzerReducerDetailed extends Reducer<Text, ScorePair, Text, Text> {
-	
+
 	protected FingerprintComparison fc;
-//	private static final Logger log = LoggerFactory.getLogger(ResultsAnalyzer.class);
-	
+	//	private static final Logger log = LoggerFactory.getLogger(ResultsAnalyzer.class);
+
 	@Override
 	public void setup(Context context) {
 
@@ -20,21 +20,30 @@ public class ResultsAnalyzerReducerDetailed extends Reducer<Text, ScorePair, Tex
 	public void reduce(Text key, Iterable<ScorePair> values, Context context) 
 			throws IOException, InterruptedException {
 
-//		ScorePair bestpair = new ScorePair("none", -1);
+		ScorePair bestpair = new ScorePair("none", -1);
+		System.out.println("Reduce for " + key.toString());
 
 		for(ScorePair sp : values) {
 
-//		log.info(bestpair.getFpid() + ' ' + bestpair.getScore() + ' ' + key.toString() + ' ' + aux.size());
-//			if(bestpair.compareTo(sp) < 0)
-//				bestpair = sp;
+			//			log.info(bestpair.getFpid() + ' ' + bestpair.getScore() + ' ' + key.toString());
+//			System.out.println("\tEvaluating (" + sp.getFpid() + ';' + sp.getScore() + ")");
+
+			if(bestpair.getScore() < sp.getScore()) {
+
+//				System.out.println("New best score for " + key.toString() + ": (" +
+//						bestpair.getFpid() + ';' + bestpair.getScore() + ") --> (" +
+//						sp.getFpid() + ';' + sp.getScore() + ")");
+				
+				bestpair = new ScorePair(sp);
+			}
 
 
-//			if(fc.genuine(bestpair.getFpid(), key.toString())) {
+			//			if(fc.genuine(bestpair.getFpid(), key.toString())) {
 
-				String result = sp.getFpid() + "\t" + sp.getScore() + "\t";
-				result = result + "\t" + fc.genuine(sp.getFpid(), key.toString());
-				context.write(key, new Text(result));
-//			}
+			String result = sp.getFpid() + "\t" + sp.getScore() + "\t";
+			result = result + "\t" + fc.genuine(sp.getFpid(), key.toString());
+			context.write(key, new Text(result));
+			//			}
 		}
 	}
 }

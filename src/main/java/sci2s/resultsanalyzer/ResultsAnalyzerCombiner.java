@@ -21,8 +21,9 @@ public class ResultsAnalyzerCombiner extends Reducer<Text, ScorePair, Text, Scor
 		ScorePair bestpair = new ScorePair("", -1);
 
 		for(ScorePair sp : values) {
-			if(bestpair.compareTo(sp) < 0)
-				bestpair = sp;
+			if(bestpair.getScore() < sp.getScore()) {
+				bestpair = new ScorePair(sp);
+			}
 		}
 		
 		context.write(key, bestpair);

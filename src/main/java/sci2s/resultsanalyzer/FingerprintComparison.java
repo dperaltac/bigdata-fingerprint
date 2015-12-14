@@ -20,7 +20,7 @@ public class FingerprintComparison {
 	
 	protected String[] patterns = {
 		"\\/[f|s|F|S][0-9]*(\\.xyt)?$",
-		"\\/[A-Z][a-z]+[0-9]+_[0-9]+(\\.xyt)?$",
+		"\\/(Sfinge)?[A-Z][a-z]+[0-9]+_[0-9]+(\\.xyt)?$",
 		"\\/[0-9]+_[0-9]+(\\.xyt)?$",
 		"\\/(pb|dp)+_[0-9]{4}_[0-9]_[0-9]+(\\.xyt)?$",
 		"\\/[0-9]{3}\\/[LR]\\/[0-9]{3}_[LR][0-3]_[0-9]+(\\.xyt)?$",
@@ -103,6 +103,7 @@ public class FingerprintComparison {
 	public boolean genuineSfinge(String f1, String f2) {
 
 		String objetivo = f1.substring(f1.lastIndexOf("/")+1, f1.lastIndexOf("_")+1);
+		objetivo = objetivo.substring(objetivo.indexOf(".")+1);
 
 		return f2.contains(objetivo);
 	}

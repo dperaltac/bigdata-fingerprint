@@ -24,8 +24,9 @@ public class ResultsAnalyzerReducer extends Reducer<Text, ScorePair, IntWritable
 		ScorePair bestpair = new ScorePair("", -1);
 
 		for(ScorePair sp : values) {
-			if(bestpair.compareTo(sp) < 0)
-				bestpair = sp;
+			if(bestpair.getScore() < sp.getScore()) {
+				bestpair = new ScorePair(sp);
+			}
 		}
 
 		if(fc.genuine(bestpair.getFpid(), key.toString()))
