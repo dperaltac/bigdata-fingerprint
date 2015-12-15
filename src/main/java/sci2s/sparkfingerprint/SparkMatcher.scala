@@ -88,16 +88,16 @@ object SparkMatcher {
       val matcher = options.get('matcher).get.toString
       val partialScore = options.get('partialscore).get.toString
       val templateFile = options.get('templatefile).get.toString
-      val outputDir = options.getOrElse('outputdir, "output_spark_" + partialScore + "_" + System.currentTimeMillis).toString
+      val outputDir = options.getOrElse('outputdir, "output_spark_" + partialScore + "_").toString + System.currentTimeMillis
       val mapFileName = options.get('mapfile).get.toString
       val infoFileName = options.get('infofile).get.toString
       val numPartitions = options.get('numpartitions).getOrElse(10).asInstanceOf[Int]
 
       // TODO the number of processes may be passed as a parameter
-      val conf = new SparkConf().setMaster("local[4]").setAppName("Generic Matcher " + matcher)
+      val conf = new SparkConf().setAppName("Generic Matcher " + matcher)
       .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .set("spark.kryo.registrationRequired", "false")
-      .set("spark.hadoop.cloneConf", "true")
+      .set("spark.hadoop.cloneConf", "true").setMaster("local")
       
       // Register classes for serialization
       conf.registerKryoClasses(Array(
@@ -134,7 +134,7 @@ object SparkMatcher {
       }
       
       // Compute the partial scores for each template ls
-      val partialscores = computePartialScores2(partialScore, templateLS, inputLS)
+      val partialscores = computeScores2(partialScore, templateLS, inputLS)
       
       println("Partial scores computed. Time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
 
@@ -151,7 +151,7 @@ object SparkMatcher {
       println("Total time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
 	}
 
-  def computePartialScores1[PSType <: PartialScore](partialscore : String, templateLS : RDD[(String, LocalStructureCylinder)],
+  def computeScores1[PSType <: PartialScore](partialscore : String, templateLS : RDD[(String, LocalStructureCylinder)],
       inputLS : Broadcast[Array[(String, LSCylinderArray)]]) = {
       
     val partialscores = templateLS.flatMap({ case (tid, ls) =>
@@ -176,10 +176,11 @@ object SparkMatcher {
     partialscores
   }
 
-  def computePartialScores2[PSType <: PartialScore](partialscore : String, templateLS : RDD[(String, LocalStructureCylinder)],
+  def computeScores2[PSType <: PartialScore](partialscore : String, templateLS : RDD[(String, LocalStructureCylinder)],
       inputLS : Broadcast[Array[(String, LSCylinderArray)]]) = {
       
-    val partialscores = templateLS.flatMap({ case (tid, ls) =>
+    // First, compute the partial scores of each template LS with each input fingerprint.
+    val scores = templateLS.flatMap({ case (tid, ls) =>
 
         val PSClass = Class.forName("sci2s.mrfingerprint." + partialscore)
         val constructor = PSClass.getConstructor(classOf[LocalStructure], classOf[Array[LocalStructure]])
@@ -192,13 +193,13 @@ object SparkMatcher {
         }
       }).partitionBy(new RDD2Partitioner(templateLS.partitioner.get.numPartitions))
         
-      // Now we reduce all the partial scores of the same template fingerprint
+      // Now we reduce all the partial scores of the same pair of fingerprints
       .reduceByKey((v1, v2) => (v1._1.aggregateSinglePS(v2._1).asInstanceOf[PSType], v1._2))
       
       // Compute the final score using the np value
       .mapValues { case (ps, inputsize) => ps.computeScore(inputsize) }
     
-    partialscores
+    scores
   }
   
 }

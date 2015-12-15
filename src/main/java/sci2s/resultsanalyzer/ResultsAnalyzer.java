@@ -23,16 +23,11 @@ public class ResultsAnalyzer extends Configured implements Tool{
 
 	public static void printUsage() {
 		System.err.println("Processes the output of the matching process.\n");
-		System.err.print("Usage: hadoop jar " + MRMatcher.class.getName() + " [Options] <matching output dir> <results dir>");
+		System.err.print("Usage: hadoop jar " + MRMatcher.class.getName() + " <matching output dir> <results dir>");
 
 		String [] types = (new FingerprintComparison()).getTypes();
 
 		System.err.println(" {" + Joiner.on("|").join(types) + "}\n");
-
-		System.err.println("Options:");
-		System.err.println("\t-D PartialScore={PartialScoreJiang|PartialScoreLSS|PartialScoreLSSR}\tNo default");
-		System.err.println("\t-D MapFileName=<file> \tDefault: " + Util.MAPFILEDEFAULTNAME);
-		System.err.println("\t-D InfoFileName=<file>\tDefault: " + Util.INFOFILEDEFAULTNAME);
 	}
 
 	public int run(String[] arg0) throws Exception {

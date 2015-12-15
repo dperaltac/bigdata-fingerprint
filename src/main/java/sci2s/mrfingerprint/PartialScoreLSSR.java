@@ -13,23 +13,8 @@ import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 
-import com.google.common.collect.MinMaxPriorityQueue;
-import com.google.common.collect.MinMaxPriorityQueue.Builder;
-
 
 public class PartialScoreLSSR implements PartialScore {
-
-	protected LocalMatch [] lmatches;
-	protected IntWritable templatesize;
-	
-	public static final int NREL = 5;
-	public static final double WR = 0.5; //!< Weight parameter in Relaxation computation
-	public static final double MUP1 = 5; //!< Sigmoid parameter 1 in the computation of d_1 relaxation
-	public static final double TAUP1 = -1.6; //!< Sigmoid parameter 2 in the computation of d_1 relaxation
-	public static final double MUP2 = 0.261799387799; //!< Sigmoid parameter 1 in the computation of d_2 relaxation
-	public static final double TAUP2 = -30; //!< Sigmoid parameter 2 in the computation of d_2 relaxation
-	public static final double MUP3 = 0.261799387799; //!< Sigmoid parameter 1 in the computation of d_3 relaxation
-	public static final double TAUP3 = -30; //!< Sigmoid parameter 2 in the computation of d_3 relaxation
 	
 	static protected class LocalMatch implements Comparable<LocalMatch>, Writable {
 
@@ -101,10 +86,18 @@ public class PartialScoreLSSR implements PartialScore {
 		}
 	}
 	
-	protected static final int DEFAULTSIZE = 200;
+	protected LocalMatch [] lmatches;
+	protected IntWritable templatesize;
 	
-	protected static final Builder<LocalMatch> PriorityQueueBuilder = MinMaxPriorityQueue.orderedBy(LocalMatch.invertedComparator());
-	
+	public static final int NREL = 5;
+	public static final double WR = 0.5; //!< Weight parameter in Relaxation computation
+	public static final double MUP1 = 5; //!< Sigmoid parameter 1 in the computation of d_1 relaxation
+	public static final double TAUP1 = -1.6; //!< Sigmoid parameter 2 in the computation of d_1 relaxation
+	public static final double MUP2 = 0.261799387799; //!< Sigmoid parameter 1 in the computation of d_2 relaxation
+	public static final double TAUP2 = -30; //!< Sigmoid parameter 2 in the computation of d_2 relaxation
+	public static final double MUP3 = 0.261799387799; //!< Sigmoid parameter 1 in the computation of d_3 relaxation
+	public static final double TAUP3 = -30; //!< Sigmoid parameter 2 in the computation of d_3 relaxation
+		
 	public PartialScoreLSSR() {
 
 		templatesize = new IntWritable(0);
@@ -120,7 +113,28 @@ public class PartialScoreLSSR implements PartialScore {
 	// Parameter constructor. Performs the partialAggregate operation.
 	public PartialScoreLSSR(Iterable<GenericPSWrapper> values, int nr) {
 
-		MinMaxPriorityQueue<LocalMatch> heap = PriorityQueueBuilder.maximumSize(nr).create();
+		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(nr, Collections.reverseOrder());
+		PartialScoreLSSR psc;
+				
+		int tam = 0;
+		
+		for(GenericPSWrapper ps : values) {
+			psc = (PartialScoreLSSR) ps.get();
+			
+			for(LocalMatch lm : psc.lmatches)
+				heap.add(lm);
+			
+			tam +=  psc.templatesize.get();
+		}
+
+		lmatches = Arrays.copyOfRange(heap.toArray(new LocalMatch[heap.size()]), 1, nr);
+		templatesize = new IntWritable(tam);
+	}
+	
+	// Parameter constructor. Performs the partialAggregate operation.
+	public PartialScoreLSSR(Iterable<GenericPSWrapper> values) {
+
+		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(Collections.reverseOrder());
 		PartialScoreLSSR psc;
 				
 		int tam = 0;
@@ -188,7 +202,6 @@ public class PartialScoreLSSR implements PartialScore {
 		
 		auxaw.write(out);
 	}
-
 	
 	public static double rho(Minutia t_a, Minutia t_b, Minutia k_a, Minutia k_b) {
 		
@@ -232,7 +245,7 @@ public class PartialScoreLSSR implements PartialScore {
 		}
 
 		// Extract the best nr pairs (LSS consolidation)
-		int nr = Math.min(inputsize, tam);
+		int nr = Math.min(Math.min(inputsize, tam), bestmatches.size());
 		int np = computeNP(inputsize, tam);
 		
 		LocalMatch[] bestlm = new LocalMatch[nr];
@@ -246,7 +259,6 @@ public class PartialScoreLSSR implements PartialScore {
 		
 		return consolidation(bestscores, bestlm, np);
 	}
-
 	
 	public PartialScore partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
 		
@@ -296,17 +308,14 @@ public class PartialScoreLSSR implements PartialScore {
 
 		PartialScoreLSSR psc = (PartialScoreLSSR) ps;
 		PartialScoreLSSR result = new PartialScoreLSSR();
-		
-		// TODO this is just a lower bound of an upper bound of the real nr, it's not the real thing!!
-		int nr = Math.max(psc.lmatches.length, lmatches.length);
-		
-		MinMaxPriorityQueue<LocalMatch> heap = PriorityQueueBuilder.maximumSize(nr).create();
-				
+
+		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(Collections.reverseOrder());
+					
 		for(LocalMatch lm : psc.lmatches)
 			heap.add(lm);
 		for(LocalMatch lm : lmatches)
 			heap.add(lm);
-
+	
 		result.lmatches = heap.toArray(new LocalMatch[heap.size()]);
 		result.templatesize = new IntWritable(psc.templatesize.get() + templatesize.get());
 		
