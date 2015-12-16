@@ -134,7 +134,7 @@ public class PartialScoreLSSR implements PartialScore {
 	// Parameter constructor. Performs the partialAggregate operation.
 	public PartialScoreLSSR(Iterable<GenericPSWrapper> values) {
 
-		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(Collections.reverseOrder());
+		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(100, Collections.reverseOrder());
 		PartialScoreLSSR psc;
 				
 		int tam = 0;
@@ -309,7 +309,8 @@ public class PartialScoreLSSR implements PartialScore {
 		PartialScoreLSSR psc = (PartialScoreLSSR) ps;
 		PartialScoreLSSR result = new PartialScoreLSSR();
 
-		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(Collections.reverseOrder());
+		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(psc.lmatches.length + lmatches.length,
+				Collections.reverseOrder());
 					
 		for(LocalMatch lm : psc.lmatches)
 			heap.add(lm);
