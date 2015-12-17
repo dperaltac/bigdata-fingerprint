@@ -101,7 +101,7 @@ object SparkMatcher {
       val conf = new SparkConf().setAppName("Generic Matcher " + matcher)
       .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .set("spark.kryo.registrationRequired", "false")
-      .set("spark.hadoop.cloneConf", "true").setMaster("local")
+      .set("spark.hadoop.cloneConf", "true")
       
       // Register classes for serialization
       conf.registerKryoClasses(Array(
