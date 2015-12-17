@@ -308,16 +308,24 @@ public class PartialScoreLSSR implements PartialScore {
 
 		PartialScoreLSSR psc = (PartialScoreLSSR) ps;
 		PartialScoreLSSR result = new PartialScoreLSSR();
+		
+		int totallmatches = psc.lmatches.length + lmatches.length;  
+		
+		if(totallmatches > 0) {
+			PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(psc.lmatches.length + lmatches.length,
+					Collections.reverseOrder());
+						
+			for(LocalMatch lm : psc.lmatches)
+				heap.add(lm);
+			for(LocalMatch lm : lmatches)
+				heap.add(lm);
 
-		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(psc.lmatches.length + lmatches.length,
-				Collections.reverseOrder());
-					
-		for(LocalMatch lm : psc.lmatches)
-			heap.add(lm);
-		for(LocalMatch lm : lmatches)
-			heap.add(lm);
+			result.lmatches = heap.toArray(new LocalMatch[heap.size()]);
+		}
+		else {
+			result.lmatches = new LocalMatch[0];
+		}
 	
-		result.lmatches = heap.toArray(new LocalMatch[heap.size()]);
 		result.templatesize = new IntWritable(psc.templatesize.get() + templatesize.get());
 		
 		return result;

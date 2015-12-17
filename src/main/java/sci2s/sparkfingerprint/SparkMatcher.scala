@@ -45,6 +45,8 @@ object SparkMatcher {
   
   type OptionMap = Map[Symbol, Any]
   
+  var DEBUG = false
+  
   def nextOption(map : OptionMap, list: List[String]) : OptionMap = {
     
     list match {
@@ -63,6 +65,9 @@ object SparkMatcher {
                              nextOption(map ++ Map('outputdir -> value), tail)
       case "--num-partitions" :: value :: tail =>
                              nextOption(map ++ Map('numpartitions -> value.toInt), tail)
+      case "--debug" :: tail =>
+                             DEBUG = true
+                             nextOption(map, tail)
       case option :: tail => println("Unknown option "+option) 
                              System.exit(1)
                              map
@@ -82,7 +87,6 @@ object SparkMatcher {
       println(options)
 
 			val initialtime = System.currentTimeMillis
-      val DEBUG = false
 
 			// Parameters
       val matcher = options.get('matcher).get.toString
