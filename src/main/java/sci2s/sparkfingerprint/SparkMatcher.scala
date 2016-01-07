@@ -98,7 +98,7 @@ object SparkMatcher {
       val numPartitions = options.get('numpartitions).getOrElse(10).asInstanceOf[Int]
 
       // TODO the number of processes may be passed as a parameter
-      val conf = new SparkConf().setAppName("Generic Matcher " + matcher)
+      val conf = new SparkConf().setAppName("Spark Matcher " + matcher + " " + templateFile.substring(templateFile.lastIndexOf('/')))
       .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .set("spark.kryo.registrationRequired", "false")
       .set("spark.hadoop.cloneConf", "true")

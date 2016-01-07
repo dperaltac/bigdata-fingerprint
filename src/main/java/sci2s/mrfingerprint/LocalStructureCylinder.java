@@ -27,7 +27,7 @@ public class LocalStructureCylinder extends LocalStructure {
 	public static final double MINVC = 0.75;
 	public static final int NEIGHBORHOODRADIUS = 28;
 	public static final int RNEIGHBORHOODRADIUS = R+NEIGHBORHOODRADIUS;
-	public static final int MINM = 2;
+	public static final int MINM = 4;
 	public static final int NUMCELLS = ND*NS*NS;
 	public static final int MAXNVCELLS = (int) Math.floor((1.0-MINVC*(2-4/Math.PI)) * NUMCELLS);
 	public static final double ISIGMAD = 1.43239448783; //1.0/SIGMAD;
