@@ -101,7 +101,7 @@ public class PartialScoreLSSR implements PartialScore {
 	public PartialScoreLSSR() {
 
 		templatesize = new IntWritable(0);
-		lmatches = null;
+		lmatches = new LocalMatch[0];
 	}
 	
 	public PartialScoreLSSR(PartialScoreLSSR o) {
