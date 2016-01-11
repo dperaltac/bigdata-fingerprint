@@ -3,7 +3,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -18,9 +17,9 @@ public class PartialScoreLSSR implements PartialScore {
 	
 	static protected class LocalMatch implements Comparable<LocalMatch>, Writable {
 
-		public Minutia b1min;
-		public Minutia b2min;
-		public double sl;
+		protected Minutia b1min;
+		protected Minutia b2min;
+		protected double sl;
 
 		public LocalMatch() {
 			b1min = new Minutia();
@@ -113,7 +112,7 @@ public class PartialScoreLSSR implements PartialScore {
 	// Parameter constructor. Performs the partialAggregate operation.
 	public PartialScoreLSSR(Iterable<GenericPSWrapper> values, int nr) {
 
-		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(nr, Collections.reverseOrder());
+		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(nr, LocalMatch.invertedComparator());
 		PartialScoreLSSR psc;
 				
 		int tam = 0;
@@ -127,14 +126,17 @@ public class PartialScoreLSSR implements PartialScore {
 			tam +=  psc.templatesize.get();
 		}
 
-		lmatches = Arrays.copyOfRange(heap.toArray(new LocalMatch[heap.size()]), 1, nr);
+		lmatches = new LocalMatch[nr];
+		for(int i = 0; i < lmatches.length; i++)
+			lmatches[i] = heap.poll();
+		
 		templatesize = new IntWritable(tam);
 	}
 	
 	// Parameter constructor. Performs the partialAggregate operation.
 	public PartialScoreLSSR(Iterable<GenericPSWrapper> values) {
 
-		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(100, Collections.reverseOrder());
+		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(100, LocalMatch.invertedComparator());
 		PartialScoreLSSR psc;
 				
 		int tam = 0;
@@ -148,26 +150,28 @@ public class PartialScoreLSSR implements PartialScore {
 			tam +=  psc.templatesize.get();
 		}
 
-		lmatches = heap.toArray(new LocalMatch[heap.size()]);
+		lmatches = new LocalMatch[heap.size()];
+		for(int i = 0; i < lmatches.length; i++)
+			lmatches[i] = heap.poll();
+
 		templatesize = new IntWritable(tam);
 	}
 
 	public PartialScoreLSSR (LocalStructure ls, LocalStructure[] als) {
 		double sl;
 
-		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(als.length, Collections.reverseOrder());
+		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(als.length, LocalMatch.invertedComparator());
 
 		// At this point we only have one template minutia
 		Minutia b1 = ((LocalStructureCylinder) ls).getMinutia();
 		Minutia b2;
 
-		for(int i = 0; i < als.length; ++i) {
-			
+		for(LocalStructure ils : als) {			
 			try {
-				sl = ls.similarity(als[i]);
+				sl = ls.similarity(ils);
 				
 				if(sl > 0) {
-					b2 = ((LocalStructureCylinder) als[i]).getMinutia();
+					b2 = ((LocalStructureCylinder) ils).getMinutia();
 					heap.add(new LocalMatch(b1, b2, sl));
 				}
 			} catch (LSException e) {
@@ -175,8 +179,10 @@ public class PartialScoreLSSR implements PartialScore {
 				e.printStackTrace();
 			}
 		}
-		
-		lmatches = heap.toArray(new LocalMatch[heap.size()]);
+
+		lmatches = new LocalMatch[heap.size()];
+		for(int i = 0; i < lmatches.length; i++)
+			lmatches[i] = heap.poll();
 
 		templatesize = new IntWritable(1);
 	}
@@ -227,7 +233,7 @@ public class PartialScoreLSSR implements PartialScore {
 			inputsize = 50;
 		}
 		
-		PriorityQueue<LocalMatch> bestmatches = new PriorityQueue<LocalMatch>(inputsize*50, Collections.reverseOrder());
+		PriorityQueue<LocalMatch> bestmatches = new PriorityQueue<LocalMatch>(inputsize*50, LocalMatch.invertedComparator());
 
 		PartialScoreLSSR psc;
 		
@@ -310,14 +316,16 @@ public class PartialScoreLSSR implements PartialScore {
 		
 		if(totallmatches > 0) {
 			PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(psc.lmatches.length + lmatches.length,
-					Collections.reverseOrder());
+					LocalMatch.invertedComparator());
 						
 			for(LocalMatch lm : psc.lmatches)
 				heap.add(lm);
 			for(LocalMatch lm : lmatches)
 				heap.add(lm);
 
-			result.lmatches = heap.toArray(new LocalMatch[heap.size()]);
+			result.lmatches = new LocalMatch[heap.size()];
+			for(int i = 0; i < result.lmatches.length; i++)
+				result.lmatches[i] = heap.poll();
 		}
 		else {
 			result.lmatches = new LocalMatch[0];
@@ -330,7 +338,7 @@ public class PartialScoreLSSR implements PartialScore {
 
 	public double computeScore(int inputsize) {
 		
-		PriorityQueue<LocalMatch> bestmatches = new PriorityQueue<LocalMatch>(lmatches.length, Collections.reverseOrder());
+		PriorityQueue<LocalMatch> bestmatches = new PriorityQueue<LocalMatch>(lmatches.length, LocalMatch.invertedComparator());
 		
 		// Concatenate all similarity values
 		for(LocalMatch lm : lmatches)
@@ -367,7 +375,10 @@ public class PartialScoreLSSR implements PartialScore {
 		
 		for (int j=0; j<nr; j++)
 			for (int k=0; k<nr; k++)
-				rhotab[j][k] = rho(bestlm[j].b1min,bestlm[j].b2min, bestlm[k].b1min,bestlm[k].b2min);
+				if (k!=j)
+					rhotab[j][k] = rho(bestlm[j].b1min,bestlm[j].b2min, bestlm[k].b1min,bestlm[k].b2min);
+				else
+					rhotab[j][k] = 0;
 		
 		// Apply relaxation iterations
 		for (int i=0; i<NREL; i++)
@@ -380,8 +391,7 @@ public class PartialScoreLSSR implements PartialScore {
 			{
 				sum = 0.0;
 				for (int k=0; k<nr; k++)
-					if (k!=j)
-						sum += rhotab[j][k] * lambdaT1[k];
+					sum += rhotab[j][k] * lambdaT1[k];
 				
 				lambdaT[j] = WR*lambdaT1[j] + LAMBDAWEIGHT*sum;
 			}

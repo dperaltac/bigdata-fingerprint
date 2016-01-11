@@ -259,7 +259,7 @@ public class LocalStructureCylinder extends LocalStructure {
 	
 	
 	public Minutia getMinutia() {
-		return minutia;
+		return new Minutia(minutia);
 	}
 
 
