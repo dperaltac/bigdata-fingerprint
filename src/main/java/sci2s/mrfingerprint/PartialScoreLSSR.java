@@ -186,7 +186,7 @@ public class PartialScoreLSSR implements PartialScore {
 		templatesize.readFields(in);
 
 		// Read the local matches
-		LocalMatchArray auxaw = new LocalMatchArray();
+		LocalMatchArray auxaw = new LocalMatchArray(lmatches);
 		auxaw.readFields(in);
 		lmatches = (LocalMatch[]) auxaw.toArray();
 	}
@@ -196,9 +196,6 @@ public class PartialScoreLSSR implements PartialScore {
 		templatesize.write(out);
 
 		LocalMatchArray auxaw = new LocalMatchArray(lmatches);
-		
-		if(lmatches.length == 0)
-			System.out.println("Empty");
 		
 		auxaw.write(out);
 	}
