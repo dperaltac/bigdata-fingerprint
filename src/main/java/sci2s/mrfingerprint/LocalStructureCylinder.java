@@ -375,5 +375,9 @@ public class LocalStructureCylinder extends LocalStructure {
 	public ArrayWritable newArrayWritable() {
 		return new LSCylinderArray();
 	}
+	
+	public boolean isValid() {
+		return valid;
+	}
 
 }

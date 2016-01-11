@@ -79,20 +79,33 @@ public class PartialScoreLSS implements PartialScore {
 	}
 
 	public PartialScoreLSS(LocalStructure ls, LocalStructure [] als) {
+		
+		// If the cylinder is not valid, no partial score is computed
+		if(!((LocalStructureCylinder) ls).isValid()) {
+
+			bestsimilarities = new ArrayPrimitiveWritable();
+			templatesize = new IntWritable(0);
+			
+			return;
+		}
 
 		PriorityQueue<Double> gamma = new PriorityQueue<Double>(als.length, Collections.reverseOrder());
 		double sl;
 
 		for(LocalStructure ils : als) {
-			try {
-				sl = ls.similarity(ils);
-				
-				if(sl > 0)
-					gamma.add(sl);
-				
-			} catch (LSException e) {
-				System.err.println(e.getMessage());
-				e.printStackTrace();
+
+			// If the cylinder is not valid, no partial score is computed
+			if(((LocalStructureCylinder) ils).isValid()) {
+				try {
+					sl = ls.similarity(ils);
+					
+					if(sl > 0)
+						gamma.add(sl);
+					
+				} catch (LSException e) {
+					System.err.println(e.getMessage());
+					e.printStackTrace();
+				}
 			}
 		}
 
@@ -268,7 +281,7 @@ public class PartialScoreLSS implements PartialScore {
 
 	public boolean isEmpty() {
 		double [] bs = (double[]) bestsimilarities.get();
-		return (bs.length == 0 || bs[0] <= 0);
+		return (bs == null || bs.length == 0 || bs[0] <= 0);
 	}
 
 	public PartialScore aggregateSinglePS(PartialScore ps) {

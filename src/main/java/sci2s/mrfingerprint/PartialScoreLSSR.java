@@ -126,7 +126,7 @@ public class PartialScoreLSSR implements PartialScore {
 			tam +=  psc.templatesize.get();
 		}
 
-		lmatches = new LocalMatch[nr];
+		lmatches = new LocalMatch[Math.min(nr, heap.size())];
 		for(int i = 0; i < lmatches.length; i++)
 			lmatches[i] = heap.poll();
 		
@@ -159,6 +159,10 @@ public class PartialScoreLSSR implements PartialScore {
 
 	public PartialScoreLSSR (LocalStructure ls, LocalStructure[] als) {
 		double sl;
+		
+		// If the cylinder is not valid, no partial score is computed
+		if(!((LocalStructureCylinder) ls).isValid())
+			return;
 
 		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(als.length, LocalMatch.invertedComparator());
 
@@ -167,16 +171,21 @@ public class PartialScoreLSSR implements PartialScore {
 		Minutia b2;
 
 		for(LocalStructure ils : als) {			
-			try {
-				sl = ls.similarity(ils);
-				
-				if(sl > 0) {
-					b2 = ((LocalStructureCylinder) ils).getMinutia();
-					heap.add(new LocalMatch(b1, b2, sl));
+			LocalStructureCylinder ilsc = (LocalStructureCylinder) ls;
+
+			// If the cylinder is not valid, no partial score is computed
+			if(ilsc.isValid()) {
+				try {
+					sl = ls.similarity(ils);
+					
+					if(sl > 0) {
+						b2 = ((LocalStructureCylinder) ils).getMinutia();
+						heap.add(new LocalMatch(b1, b2, sl));
+					}
+				} catch (LSException e) {
+					System.err.println(e.getMessage());
+					e.printStackTrace();
 				}
-			} catch (LSException e) {
-				System.err.println(e.getMessage());
-				e.printStackTrace();
 			}
 		}
 
