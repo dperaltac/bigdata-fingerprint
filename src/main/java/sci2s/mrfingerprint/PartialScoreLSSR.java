@@ -3,10 +3,11 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.PriorityQueue;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.IntWritable;
@@ -40,7 +41,16 @@ public class PartialScoreLSSR implements PartialScore {
 		}
 
 		public int compareTo(LocalMatch arg0) {
-			return Double.compare(sl, arg0.sl);
+			int res = Double.compare(sl, arg0.sl);
+			
+			if(res == 0) {
+				res = Integer.compare(b1min.getIndex(),arg0.b1min.getIndex());
+				
+				if(res == 0)
+					return Integer.compare(b2min.getIndex(),arg0.b2min.getIndex());
+			}
+				
+			return res;
 		}
 
 		public void readFields(DataInput arg0) throws IOException {
@@ -57,7 +67,7 @@ public class PartialScoreLSSR implements PartialScore {
 		
 		protected final static Comparator<LocalMatch> inverted_comparator = new Comparator<LocalMatch>(){
 					public int compare(LocalMatch arg0, LocalMatch arg1) {
-						int res = arg1.compareTo(arg0);
+						int res = Double.compare(arg1.sl, arg0.sl);
 						
 						if(res == 0) {
 							res = Integer.compare(arg0.b1min.getIndex(),arg1.b1min.getIndex());
@@ -96,6 +106,8 @@ public class PartialScoreLSSR implements PartialScore {
 	public static final double TAUP2 = -30; //!< Sigmoid parameter 2 in the computation of d_2 relaxation
 	public static final double MUP3 = 0.261799387799; //!< Sigmoid parameter 1 in the computation of d_3 relaxation
 	public static final double TAUP3 = -30; //!< Sigmoid parameter 2 in the computation of d_3 relaxation
+	
+	public static final int MAX_LMATCHES = 250;
 		
 	public PartialScoreLSSR() {
 
@@ -112,76 +124,65 @@ public class PartialScoreLSSR implements PartialScore {
 	// Parameter constructor. Performs the partialAggregate operation.
 	public PartialScoreLSSR(Iterable<GenericPSWrapper> values, int nr) {
 
-		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(nr, LocalMatch.invertedComparator());
 		PartialScoreLSSR psc;
 				
 		int tam = 0;
+		TopN<LocalMatch> topn = new TopN<LocalMatch>(nr);
 		
 		for(GenericPSWrapper ps : values) {
 			psc = (PartialScoreLSSR) ps.get();
 			
-			for(LocalMatch lm : psc.lmatches)
-				heap.add(lm);
-			
+			topn.addAll(psc.lmatches);
 			tam +=  psc.templatesize.get();
 		}
-
-		lmatches = new LocalMatch[Math.min(nr, heap.size())];
-		for(int i = 0; i < lmatches.length; i++)
-			lmatches[i] = heap.poll();
 		
+		lmatches = topn.toArray(new LocalMatch[topn.size()]);
 		templatesize = new IntWritable(tam);
+		
+		this.cleanupLmatches();
 	}
 	
 	// Parameter constructor. Performs the partialAggregate operation.
 	public PartialScoreLSSR(Iterable<GenericPSWrapper> values) {
 
-		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(100, LocalMatch.invertedComparator());
-		PartialScoreLSSR psc;
-				
-		int tam = 0;
-		
-		for(GenericPSWrapper ps : values) {
-			psc = (PartialScoreLSSR) ps.get();
-			
-			for(LocalMatch lm : psc.lmatches)
-				heap.add(lm);
-			
-			tam +=  psc.templatesize.get();
-		}
-
-		lmatches = new LocalMatch[heap.size()];
-		for(int i = 0; i < lmatches.length; i++)
-			lmatches[i] = heap.poll();
-
-		templatesize = new IntWritable(tam);
+		// Estimation of an upper bound for nr
+		this(values, MAX_LMATCHES);
 	}
 
 	public PartialScoreLSSR (LocalStructure ls, LocalStructure[] als) {
+		
 		double sl;
 		
 		// If the cylinder is not valid, no partial score is computed
-		if(!((LocalStructureCylinder) ls).isValid())
-			return;
+		if(!((LocalStructureCylinder) ls).isValid()) {
 
-		PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(als.length, LocalMatch.invertedComparator());
+			lmatches = new LocalMatch[0];
+			templatesize = new IntWritable(0);
+			
+			return;
+		}
+		
+		lmatches = new LocalMatch[als.length];
 
 		// At this point we only have one template minutia
 		Minutia b1 = ((LocalStructureCylinder) ls).getMinutia();
 		Minutia b2;
 
-		for(LocalStructure ils : als) {			
-			LocalStructureCylinder ilsc = (LocalStructureCylinder) ls;
+		for(int i = 0; i < als.length; i++) {
+
+			LocalStructureCylinder ilsc = (LocalStructureCylinder) als[i];
 
 			// If the cylinder is not valid, no partial score is computed
 			if(ilsc.isValid()) {
 				try {
-					sl = ls.similarity(ils);
+					sl = ls.similarity(ilsc);
 					
 					if(sl > 0) {
-						b2 = ((LocalStructureCylinder) ils).getMinutia();
-						heap.add(new LocalMatch(b1, b2, sl));
+						b2 = ilsc.getMinutia();
+						lmatches[i] = new LocalMatch(b1, b2, sl);
 					}
+					else
+						lmatches[i] = new LocalMatch();
 				} catch (LSException e) {
 					System.err.println(e.getMessage());
 					e.printStackTrace();
@@ -189,11 +190,19 @@ public class PartialScoreLSSR implements PartialScore {
 			}
 		}
 
-		lmatches = new LocalMatch[heap.size()];
-		for(int i = 0; i < lmatches.length; i++)
-			lmatches[i] = heap.poll();
-
+		cleanupLmatches();
 		templatesize = new IntWritable(1);
+	}
+	
+	private void cleanupLmatches() {
+		Arrays.sort(lmatches, Collections.reverseOrder());
+		int i = 0;
+		
+		while(i < lmatches.length && lmatches[i].sl > 0)
+			i++;
+		
+		if(i < lmatches.length)
+			lmatches = Arrays.copyOf(lmatches, i);
 	}
 
 	public void readFields(DataInput in) throws IOException {
@@ -209,7 +218,7 @@ public class PartialScoreLSSR implements PartialScore {
 	public void write(DataOutput out) throws IOException {
 		
 		templatesize.write(out);
-
+		
 		LocalMatchArray auxaw = new LocalMatchArray(lmatches);
 		
 		auxaw.write(out);
@@ -241,17 +250,17 @@ public class PartialScoreLSSR implements PartialScore {
 			System.err.println("No infomap value found for key " + key.getFpidInput());
 			inputsize = 50;
 		}
-		
-		PriorityQueue<LocalMatch> bestmatches = new PriorityQueue<LocalMatch>(inputsize*50, LocalMatch.invertedComparator());
 
+		// inputsize is an upper bound of nr=min(templatesize, inputsize)
+		TopN<LocalMatch> bestmatches = new TopN<LocalMatch>(inputsize);
 		PartialScoreLSSR psc;
+
 		
 		// Concatenate all similarity values
 		for(GenericPSWrapper ps : values) {
 			psc = (PartialScoreLSSR) ps.get();
-			
-			for(LocalMatch lm : psc.lmatches)
-				bestmatches.add(lm);
+
+			bestmatches.addAll(psc.lmatches);
 			
 			tam +=  psc.templatesize.get();
 		}
@@ -260,14 +269,13 @@ public class PartialScoreLSSR implements PartialScore {
 		int nr = Math.min(Math.min(inputsize, tam), bestmatches.size());
 		int np = computeNP(inputsize, tam);
 		
-		LocalMatch[] bestlm = new LocalMatch[nr];
+		bestmatches.truncate(nr);
+		
+		LocalMatch[] bestlm = bestmatches.toArray(new LocalMatch[nr]);
 		double [] bestscores = new double[nr];
 		
 		for(int i = 0; i < nr; i++)
-		{
-			bestlm[i] = bestmatches.poll();
 			bestscores[i] = bestlm[i].sl;
-		}
 		
 		return consolidation(bestscores, bestlm, np);
 	}
@@ -313,7 +321,7 @@ public class PartialScoreLSSR implements PartialScore {
 	}
 
 	public boolean isEmpty() {
-		return (lmatches == null || lmatches.length == 0 || lmatches[0].sl <= 0);
+		return (lmatches == null || lmatches.length == 0);
 	}
 
 	public PartialScore aggregateSinglePS(PartialScore ps) {
@@ -321,20 +329,15 @@ public class PartialScoreLSSR implements PartialScore {
 		PartialScoreLSSR psc = (PartialScoreLSSR) ps;
 		PartialScoreLSSR result = new PartialScoreLSSR();
 		
-		int totallmatches = psc.lmatches.length + lmatches.length;  
-		
-		if(totallmatches > 0) {
-			PriorityQueue<LocalMatch> heap = new PriorityQueue<LocalMatch>(psc.lmatches.length + lmatches.length,
-					LocalMatch.invertedComparator());
-						
-			for(LocalMatch lm : psc.lmatches)
-				heap.add(lm);
-			for(LocalMatch lm : lmatches)
-				heap.add(lm);
 
-			result.lmatches = new LocalMatch[heap.size()];
-			for(int i = 0; i < result.lmatches.length; i++)
-				result.lmatches[i] = heap.poll();
+		if(psc.lmatches.length + lmatches.length > MAX_LMATCHES) {
+			TopN<LocalMatch> topn = new TopN<LocalMatch>(lmatches, MAX_LMATCHES);
+			topn.addAll(psc.lmatches);
+			
+			result.lmatches = topn.toArray(new LocalMatch[0]);
+		}
+		else if(psc.lmatches.length + lmatches.length > 0) {
+			result.lmatches = (LocalMatch[]) ArrayUtils.addAll(lmatches, psc.lmatches);				
 		}
 		else {
 			result.lmatches = new LocalMatch[0];
@@ -342,29 +345,25 @@ public class PartialScoreLSSR implements PartialScore {
 	
 		result.templatesize = new IntWritable(psc.templatesize.get() + templatesize.get());
 		
+		result.cleanupLmatches();
+		
 		return result;
 	}
 
 	public double computeScore(int inputsize) {
-		
-		PriorityQueue<LocalMatch> bestmatches = new PriorityQueue<LocalMatch>(lmatches.length, LocalMatch.invertedComparator());
-		
-		// Concatenate all similarity values
-		for(LocalMatch lm : lmatches)
-			bestmatches.add(lm);
 
 		// Extract the best nr pairs (LSS consolidation)
 		int nr = Math.min(Math.min(inputsize, templatesize.get()), lmatches.length);
 		int np = computeNP(inputsize, templatesize.get());
+
+		// Concatenate all similarity values
+		TopN<LocalMatch> bestmatches = new TopN<LocalMatch>(lmatches, nr);
 		
 		double [] bestscores = new double[nr];
-		LocalMatch[] bestlm = new LocalMatch[nr];
+		LocalMatch[] bestlm = bestmatches.toArray(new LocalMatch[nr]);
 		
 		for(int i = 0; i < nr; i++)
-		{
-			bestlm[i] = bestmatches.poll();
 			bestscores[i] = bestlm[i].sl;
-		}
 		
 		return consolidation(bestscores, bestlm, np);
 	}

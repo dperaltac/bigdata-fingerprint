@@ -346,7 +346,7 @@ public class LocalStructureCylinder extends LocalStructure {
 			ca_b = cm_vector[i];
 			cb_a = lsc.cm_vector[i];
 
-			if (ca_b>=0 && cb_a>=0 && !(ca_b==0 && cb_a==0))
+			if (ca_b>=0 && cb_a>=0)
 			{
 				count++;
 
@@ -355,7 +355,7 @@ public class LocalStructureCylinder extends LocalStructure {
 				norm_diff += ca_b*cb_a;
 			}
 		}
-
+			
 		//Check if two cylinders are matchable
 		if(count >= MINCELLS)
 		{
