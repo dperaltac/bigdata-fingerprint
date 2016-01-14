@@ -41,6 +41,9 @@ public class PartialScoreLSSR implements PartialScore {
 		}
 
 		public int compareTo(LocalMatch arg0) {
+			if(arg0 == null)
+				return -1;					
+					
 			int res = Double.compare(sl, arg0.sl);
 			
 			if(res == 0) {
@@ -64,25 +67,6 @@ public class PartialScoreLSSR implements PartialScore {
 			b2min.write(arg0);
 			arg0.writeDouble(sl);
 		}
-		
-		protected final static Comparator<LocalMatch> inverted_comparator = new Comparator<LocalMatch>(){
-					public int compare(LocalMatch arg0, LocalMatch arg1) {
-						int res = Double.compare(arg1.sl, arg0.sl);
-						
-						if(res == 0) {
-							res = Integer.compare(arg0.b1min.getIndex(),arg1.b1min.getIndex());
-							
-							if(res == 0)
-								return Integer.compare(arg0.b2min.getIndex(),arg1.b2min.getIndex());
-						}
-							
-						return res;
-					}
-				};
-				
-		public static Comparator<LocalMatch> invertedComparator() {
-			return inverted_comparator;
-		}
 	}
 	
 	static protected class LocalMatchArray extends ArrayWritable {
@@ -95,6 +79,20 @@ public class PartialScoreLSSR implements PartialScore {
 		}
 	}
 	
+	private class LocalMatchComparator implements Comparator<LocalMatch> 
+	{
+	    public int compare(LocalMatch left, LocalMatch right) {
+	        // Swap -1 and 1 here if you want nulls to move to the front.
+	        if (left == null) return right == null ? 0 : -1;
+	        if (right == null) return 1;
+	        // you are now guaranteed that neither left nor right are null.
+
+	        // I'm assuming avg is int. There is also Double.compare if they aren't.
+	        return left.compareTo(right); 
+	    }
+	}
+	
+	// Must never contain null.
 	protected LocalMatch [] lmatches;
 	protected IntWritable templatesize;
 	
@@ -181,8 +179,6 @@ public class PartialScoreLSSR implements PartialScore {
 						b2 = ilsc.getMinutia();
 						lmatches[i] = new LocalMatch(b1, b2, sl);
 					}
-					else
-						lmatches[i] = new LocalMatch();
 				} catch (LSException e) {
 					System.err.println(e.getMessage());
 					e.printStackTrace();
@@ -195,10 +191,11 @@ public class PartialScoreLSSR implements PartialScore {
 	}
 	
 	private void cleanupLmatches() {
-		Arrays.sort(lmatches, Collections.reverseOrder());
+		
+		Arrays.sort(lmatches, Collections.reverseOrder(new LocalMatchComparator()));
 		int i = 0;
 		
-		while(i < lmatches.length && lmatches[i].sl > 0)
+		while(i < lmatches.length && lmatches[i] != null && lmatches[i].sl > 0)
 			i++;
 		
 		if(i < lmatches.length)

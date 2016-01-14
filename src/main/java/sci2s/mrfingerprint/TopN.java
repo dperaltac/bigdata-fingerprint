@@ -7,7 +7,7 @@ import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class TopN<E extends Comparable<? super E>> implements Iterable<E> {
+public class TopN<E extends Comparable<? super E>> implements Iterable<E>, Collection<E> {
 
 	protected TreeSet<E> set;
 	protected int maxsize;
@@ -41,9 +41,18 @@ public class TopN<E extends Comparable<? super E>> implements Iterable<E> {
 		maxsize = set.size();
 	}
 	
+	public TopN(TopN<E> lmatches) {
+		set = new TreeSet<E>(lmatches.set);
+		maxsize = lmatches.maxsize;
+	}
+
 	public boolean add(E elem) {
-		if(set.size() < maxsize || set.comparator().compare(set.last(), elem) > 0)
+		if(set.size() < maxsize)
 			return set.add(elem);
+		else if(set.comparator().compare(set.last(), elem) > 0) {
+			set.pollLast();
+			return set.add(elem);
+		}
 		else
 			return false;
 	}
@@ -83,14 +92,6 @@ public class TopN<E extends Comparable<? super E>> implements Iterable<E> {
 		return set.iterator();
 	}
 	
-	public Object[] toArray() {
-		return set.toArray();
-	}
-	
-	public E[] toArray(E[] c) {
-		return set.toArray(c);
-	}
-	
 	public int size() {
 		return set.size();
 	}
@@ -103,5 +104,49 @@ public class TopN<E extends Comparable<? super E>> implements Iterable<E> {
 	public E poll() {
 		return set.pollFirst();
 	}
+	
+	public E first() {
+		return set.first();
+	}
+
+	public void clear() {
+		set.clear();
+	}
+
+	public boolean contains(Object o) {
+		return set.contains(o);
+	}
+
+	public boolean containsAll(Collection<?> c) {
+		return set.containsAll(c);
+	}
+
+	public boolean isEmpty() {
+		return set.isEmpty();
+	}
+
+	public boolean remove(Object o) {
+		return set.remove(o);
+	}
+
+	public boolean removeAll(Collection<?> c) {
+		return set.removeAll(c);
+	}
+
+	public boolean retainAll(Collection<?> c) {
+		return set.retainAll(c);
+	}
+
+	public <T> T[] toArray(T[] a) {
+		return set.toArray(a);
+	}
+	
+	public Object[] toArray() {
+		return set.toArray();
+	}
+	
+//	public E[] toArray(E[] c) {
+//		return set.toArray(c);
+//	}
 
 }

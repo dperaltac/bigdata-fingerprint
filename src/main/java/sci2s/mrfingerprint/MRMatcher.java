@@ -15,7 +15,11 @@ import org.apache.hadoop.util.ToolRunner;
 public class MRMatcher extends Configured implements Tool{
 
 	public static void main(String[] args) throws Exception {
-		System.exit(ToolRunner.run(new MRMatcher(), args));
+		long inittime = System.currentTimeMillis();
+		int res = ToolRunner.run(new MRMatcher(), args);
+		
+		System.out.println("Total time: " + (System.currentTimeMillis()-inittime)/1000.0 + " seconds");
+		System.exit(res);
   	}
 	
 	public static void printUsage() {

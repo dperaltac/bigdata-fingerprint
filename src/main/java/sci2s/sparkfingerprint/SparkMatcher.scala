@@ -109,8 +109,9 @@ object SparkMatcher {
       // TODO the number of processes may be passed as a parameter
       val conf = new SparkConf().setAppName("Spark Matcher " + matcher + " " + templateFile.substring(templateFile.lastIndexOf('/')))
       .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+      .set("spark.kryoserializer.buffer.max", "512m")
       .set("spark.kryo.registrationRequired", "false")
-      .set("spark.hadoop.cloneConf", "true")//.setMaster("local")
+      .set("spark.hadoop.cloneConf", "true")//.setMaster("local[*]")
       
       // Register classes for serialization
       conf.registerKryoClasses(Array(
