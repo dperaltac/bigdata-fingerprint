@@ -110,7 +110,7 @@ object SparkMatcher {
       val conf = new SparkConf().setAppName("Spark Matcher " + matcher + " " + templateFile.substring(templateFile.lastIndexOf('/')))
       .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .set("spark.kryo.registrationRequired", "false")
-      .set("spark.hadoop.cloneConf", "true").setMaster("local")
+      .set("spark.hadoop.cloneConf", "true")//.setMaster("local")
       
       // Register classes for serialization
       conf.registerKryoClasses(Array(
@@ -138,7 +138,8 @@ object SparkMatcher {
       }
 
 			// Read input fingerprint(s)
-	    val inputLSRDD = sc.sequenceFile[String, LSCylinderArray](mapFileName).mapValues(new LSCylinderArray(_))
+	    val inputLSRDD = sc.sequenceFile[String, LSCylinderArray](mapFileName)
+        .mapValues(new LSCylinderArray(_).get().map(elem => elem.asInstanceOf[LocalStructureCylinder]))
       
       // Broadcast the input fingerprint(s)
       val inputLS = sc.broadcast(inputLSRDD.collect())
@@ -342,7 +343,7 @@ object SparkMatcher {
 
 
   def computeScores5[PSType <: PartialScore](partialscore : String, templateLS : RDD[(String, LocalStructureCylinder)],
-      inputLS : Broadcast[Array[(String, LSCylinderArray)]]) : RDD[((String, String), Double)] = {
+      inputLS : Broadcast[Array[(String, Array[LocalStructureCylinder])]]) : RDD[((String, String), Double)] = {
       
     // First, compute the partial scores of each template LS with each input fingerprint.
     val scores = templateLS.groupByKey().flatMap({ case (tid, tlsarray) =>
@@ -351,13 +352,12 @@ object SparkMatcher {
         val constructor = PSClass.getConstructor(classOf[LocalStructure], classOf[Array[LocalStructure]])
     
         // For each input fingerprint, compute the partial score with tid
-        inputLS.value.map { ils => 
-          val ilsarray = ils._2.get().map(elem => elem.asInstanceOf[LocalStructure])
-          
+        inputLS.value.map { ils =>
+
           // For each template LS, compute the partial score with the input fingerprint ilsarray
           val score = tlsarray.map ({ ls =>
-            constructor.newInstance(ls, ilsarray).asInstanceOf[PartialScore]
-            }).reduce(_.aggregateSinglePS(_)).computeScore(ilsarray.size)
+            constructor.newInstance(ls, ils._2).asInstanceOf[PartialScore]
+            }).reduce(_.aggregateSinglePS(_)).computeScore(ils._2.size)
             
           ((tid, ils._1), score)
         }
