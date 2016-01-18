@@ -166,7 +166,8 @@ object SparkMatcher {
       }
       
       // Sort by score and write output
-      partialscores.sortBy({case (k,v) => v}).saveAsTextFile(outputDir)
+//      partialscores.sortBy({case (k,v) => v}).saveAsTextFile(outputDir)
+      partialscores.saveAsTextFile(outputDir)
       
       // Print time
       println("Total time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
