@@ -40,8 +40,7 @@ public class ResultsAnalyzerReducerDetailed extends Reducer<Text, ScorePair, Tex
 
 			//			if(fc.genuine(bestpair.getFpid(), key.toString())) {
 
-			String result = sp.getFpid() + "\t" + sp.getScore() + "\t";
-			result = result + "\t" + fc.genuine(sp.getFpid(), key.toString());
+			String result = sp.getFpid() + "\t" + sp.getScore() + "\t" + fc.genuine(sp.getFpid(), key.toString());
 			context.write(key, new Text(result));
 			//			}
 		}

@@ -18,6 +18,6 @@ public class SparkResultsAnalyzerMapper extends
 		// The key is the input fingerprint
 		// The value is the template fingerprint along with the score	
 		context.write(new Text(parts[1]),
-				new ScorePair(parts[0].substring(parts[0].indexOf(';')), Double.parseDouble(parts[2])));
+				new ScorePair(parts[0].substring(parts[0].indexOf(';')+1), Double.parseDouble(parts[2])));
 	}
 }
