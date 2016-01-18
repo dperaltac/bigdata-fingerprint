@@ -4,13 +4,12 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.ArrayPrimitiveWritable;
 import org.apache.hadoop.io.IntWritable;
@@ -20,10 +19,10 @@ import org.apache.zookeeper.common.IOUtils;
 
 public class PartialScoreLSS implements PartialScore {
 	
-	protected ArrayPrimitiveWritable bestsimilarities;
+	protected double [] bestsimilarities;
 	protected IntWritable templatesize;
 
-	//TODO It's not necessary to compute NP every time!!! All the PS for the same input fingerprint will have the same partialNP
+	//TODO It's not necessary to compute nP every time!!! All the PS for the same input fingerprint will have the same nP'
 	
 	public static final double MUP = 20; //!< Sigmoid parameter 1 in the computation of n_P
 	public static final double TAUP = 0.4; //!< Sigmoid parameter 2 in the computation of n_P
@@ -32,21 +31,21 @@ public class PartialScoreLSS implements PartialScore {
 	
 	public PartialScoreLSS() {
 
-		bestsimilarities = new ArrayPrimitiveWritable();
+		bestsimilarities = new double[0];
 		templatesize = new IntWritable(0);
 		
 	}
 	
 	public PartialScoreLSS(PartialScoreLSS o) {
 		
-		bestsimilarities = new ArrayPrimitiveWritable(o.bestsimilarities.get());
+		bestsimilarities = Arrays.copyOf(o.bestsimilarities, o.bestsimilarities.length);
 		templatesize = new IntWritable(o.templatesize.get());
 		
 	}
 	
 	public PartialScoreLSS(double [] bs, int ts) {
 		
-		bestsimilarities = new ArrayPrimitiveWritable(bs);
+		bestsimilarities = Arrays.copyOf(bs, bs.length);
 		templatesize = new IntWritable(ts);
 	}
 	
@@ -54,7 +53,7 @@ public class PartialScoreLSS implements PartialScore {
 	// Parameter constructor. Performs the partialAggregateG operation.
 	public PartialScoreLSS(Iterable<GenericPSWrapper> values, int np) {
 
-		PriorityQueue<Double> best = new PriorityQueue<Double>(200, Collections.reverseOrder());
+		TopN<Double> best = new TopN<Double>(np);
 		int tam = 0;
 		PartialScoreLSS psc;
 		
@@ -62,20 +61,18 @@ public class PartialScoreLSS implements PartialScore {
 		for(GenericPSWrapper ps : values) {
 			psc = (PartialScoreLSS) ps.get();
 
-			double [] bestsl = (double []) psc.bestsimilarities.get();
-			for(double sl : bestsl)
-				best.add(sl);
+			for(double sl : psc.bestsimilarities)
+				if(sl > 0.0)
+					best.add(sl);
 
 			tam += psc.templatesize.get();
 		}
 		
 		templatesize = new IntWritable(tam);
 
-		double [] npbest = new double[Math.min(np, best.size())];
-		for(int i = 0; i < npbest.length; ++i)
-			npbest[i] = best.poll();
-		
-		bestsimilarities = new ArrayPrimitiveWritable(npbest);
+		bestsimilarities = new double[best.size()];
+		for(int i = 0; i < bestsimilarities.length; ++i)
+			bestsimilarities[i] = best.poll();
 	}
 
 	public PartialScoreLSS(LocalStructure ls, LocalStructure [] als) {
@@ -83,13 +80,13 @@ public class PartialScoreLSS implements PartialScore {
 		// If the cylinder is not valid, no partial score is computed
 		if(!((LocalStructureCylinder) ls).isValid()) {
 
-			bestsimilarities = new ArrayPrimitiveWritable();
+			bestsimilarities = new double[0];
 			templatesize = new IntWritable(0);
 			
 			return;
 		}
 
-		PriorityQueue<Double> gamma = new PriorityQueue<Double>(als.length, Collections.reverseOrder());
+		TopN<Double> gamma = new TopN<Double>(computeNP(als.length));
 		double sl;
 
 		for(LocalStructure ils : als) {
@@ -99,7 +96,7 @@ public class PartialScoreLSS implements PartialScore {
 				try {
 					sl = ls.similarity(ils);
 					
-					if(sl > 0)
+					if(sl > 0.0)
 						gamma.add(sl);
 					
 				} catch (LSException e) {
@@ -109,13 +106,10 @@ public class PartialScoreLSS implements PartialScore {
 			}
 		}
 
-		int np = Math.min(computeNP(als.length), gamma.size());
-		double [] npbest = new double [np];
+		bestsimilarities = new double[gamma.size()];
+		for(int i = 0; i < bestsimilarities.length; ++i)
+			bestsimilarities[i] = gamma.poll();
 		
-		for(int i = 0; i < np; ++i)
-			npbest[i] = gamma.poll();
-		
-		bestsimilarities = new ArrayPrimitiveWritable(npbest);
 		templatesize = new IntWritable(1);
 	}
 	
@@ -126,14 +120,19 @@ public class PartialScoreLSS implements PartialScore {
 
 	public void readFields(DataInput in) throws IOException {
 
-		bestsimilarities.readFields(in);
 		templatesize.readFields(in);
+
+		ArrayPrimitiveWritable auxaw = new ArrayPrimitiveWritable(bestsimilarities);
+		auxaw.readFields(in);
+		bestsimilarities = (double[]) auxaw.get();
 	}
 
 	public void write(DataOutput out) throws IOException {
-
-		bestsimilarities.write(out);
+		
 		templatesize.write(out);
+
+		ArrayPrimitiveWritable auxaw = new ArrayPrimitiveWritable(bestsimilarities);
+		auxaw.write(out);
 	}
 
 	
@@ -168,8 +167,7 @@ public class PartialScoreLSS implements PartialScore {
 			
 			psc = (PartialScoreLSS) ps.get();
 
-			double [] bestsl = (double []) psc.bestsimilarities.get();
-			for(double sl : bestsl)
+			for(double sl : psc.bestsimilarities)
 				best.add(sl);
 
 			tam += psc.templatesize.get();
@@ -280,62 +278,54 @@ public class PartialScoreLSS implements PartialScore {
 	}
 
 	public boolean isEmpty() {
-		double [] bs = (double[]) bestsimilarities.get();
-		return (bs == null || bs.length == 0 || bs[0] <= 0);
+		return (bestsimilarities == null || bestsimilarities.length == 0 || bestsimilarities[0] <= 0);
 	}
 
 	public PartialScore aggregateSinglePS(PartialScore ps) {
 
 		PartialScoreLSS psc = (PartialScoreLSS) ps;
 		PartialScoreLSS result = new PartialScoreLSS();
-
-		PriorityQueue<Double> best = new PriorityQueue<Double>(200, Collections.reverseOrder());
-
-		double [] bestsl = (double []) psc.bestsimilarities.get();
-		for(double sl : bestsl)
-			best.add(sl);
-
-		bestsl = (double []) bestsimilarities.get();
-		for(double sl : bestsl)
-			best.add(sl);
 		
+		final int MAX_SIMS = computeNP(250);
+
+		if(psc.bestsimilarities.length + bestsimilarities.length > MAX_SIMS) {
+			TopN<Double> topn = new TopN<Double>(ArrayUtils.toObject(bestsimilarities), MAX_SIMS);
+			topn.addAll(ArrayUtils.toObject(psc.bestsimilarities));
+			
+			result.bestsimilarities = ArrayUtils.toPrimitive(topn.toArray(new Double[0]));
+		}
+		else if(psc.bestsimilarities.length + bestsimilarities.length > 0) {
+			result.bestsimilarities = ArrayUtils.addAll(bestsimilarities, psc.bestsimilarities);				
+		}
+		else {
+			result.bestsimilarities = new double[0];
+		}
+	
 		result.templatesize = new IntWritable(psc.templatesize.get() + templatesize.get());
-
-		double [] npbest = new double[Math.max(bestsl.length, best.size())];
-		for(int i = 0; i < npbest.length; ++i)
-			npbest[i] = best.poll();
-		
-		result.bestsimilarities = new ArrayPrimitiveWritable(npbest);
 		
 		return result;
 	}
 
 	public void aggregateSingleValue(double value) {
-
-		double [] bestsl = (double []) bestsimilarities.get();
 		
-		int minpos = Util.minPosition(bestsl);
+		int minpos = Util.minPosition(bestsimilarities);
 
-		if(bestsl[minpos] < value) {
-			bestsl[minpos] = value;
-			bestsimilarities.set(bestsl);
-		}
+		if(bestsimilarities[minpos] < value)
+			bestsimilarities[minpos] = value;
 	}
 
 	public double computeScore(int inputsize) {
 		
 		int np = computeNP(inputsize, templatesize.get());
 		double sum = 0.0;
-
-		double [] best = (double[]) bestsimilarities.get();
 		
-		np = Math.min(np, best.length);
+		int np2 = Math.min(np, bestsimilarities.length);
 		
-		if(np == 0)
+		if(np2 == 0)
 			return 0;
 		
-		for(int i = 0; i < np; i++)
-			sum += best[i];
+		for(int i = 0; i < np2; i++)
+			sum += bestsimilarities[i];
 		
 		return sum/np;
 
