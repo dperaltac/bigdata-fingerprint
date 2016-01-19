@@ -34,7 +34,7 @@ public class MatchingCombiner extends Reducer<PartialScoreKey, GenericPSWrapper,
 		PartialScore ps = pssample.partialAggregateG(key, values, infomap);
 
 		// Insert the score + fpid into the output
-		if(ps != null)
+		if(ps != null && !ps.isEmpty())
 			context.write(key, new GenericPSWrapper(ps));
 	}
 }

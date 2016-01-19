@@ -10,7 +10,6 @@ import java.util.Map;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.ArrayWritable;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 
 
@@ -94,7 +93,7 @@ public class PartialScoreLSSR implements PartialScore {
 	
 	// Must never contain null.
 	protected LocalMatch [] lmatches;
-	protected IntWritable templatesize;
+	protected int templatesize;
 	
 	public static final int NREL = 5;
 	public static final double WR = 0.5; //!< Weight parameter in Relaxation computation
@@ -109,13 +108,13 @@ public class PartialScoreLSSR implements PartialScore {
 		
 	public PartialScoreLSSR() {
 
-		templatesize = new IntWritable(0);
+		templatesize = 0;
 		lmatches = new LocalMatch[0];
 	}
 	
 	public PartialScoreLSSR(PartialScoreLSSR o) {
 
-		templatesize = new IntWritable(o.templatesize.get());
+		templatesize = o.templatesize;
 		lmatches = Util.arraycopy(o.lmatches);
 	}
 	
@@ -123,19 +122,18 @@ public class PartialScoreLSSR implements PartialScore {
 	public PartialScoreLSSR(Iterable<GenericPSWrapper> values, int nr) {
 
 		PartialScoreLSSR psc;
-				
-		int tam = 0;
 		TopN<LocalMatch> topn = new TopN<LocalMatch>(nr);
+		
+		templatesize = 0;
 		
 		for(GenericPSWrapper ps : values) {
 			psc = (PartialScoreLSSR) ps.get();
 			
 			topn.addAll(psc.lmatches);
-			tam +=  psc.templatesize.get();
+			templatesize +=  psc.templatesize;
 		}
 		
 		lmatches = topn.toArray(new LocalMatch[topn.size()]);
-		templatesize = new IntWritable(tam);
 		
 		this.cleanupLmatches();
 	}
@@ -155,7 +153,7 @@ public class PartialScoreLSSR implements PartialScore {
 		if(!((LocalStructureCylinder) ls).isValid()) {
 
 			lmatches = new LocalMatch[0];
-			templatesize = new IntWritable(0);
+			templatesize = 1;
 			
 			return;
 		}
@@ -187,7 +185,7 @@ public class PartialScoreLSSR implements PartialScore {
 		}
 
 		cleanupLmatches();
-		templatesize = new IntWritable(1);
+		templatesize = 1;
 	}
 	
 	private void cleanupLmatches() {
@@ -204,7 +202,7 @@ public class PartialScoreLSSR implements PartialScore {
 
 	public void readFields(DataInput in) throws IOException {
 
-		templatesize.readFields(in);
+		templatesize = in.readInt();
 
 		// Read the local matches
 		LocalMatchArray auxaw = new LocalMatchArray(lmatches);
@@ -214,7 +212,7 @@ public class PartialScoreLSSR implements PartialScore {
 
 	public void write(DataOutput out) throws IOException {
 		
-		templatesize.write(out);
+		out.writeInt(templatesize);
 		
 		LocalMatchArray auxaw = new LocalMatchArray(lmatches);
 		
@@ -259,7 +257,7 @@ public class PartialScoreLSSR implements PartialScore {
 
 			bestmatches.addAll(psc.lmatches);
 			
-			tam +=  psc.templatesize.get();
+			tam +=  psc.templatesize;
 		}
 
 		// Extract the best nr pairs (LSS consolidation)
@@ -340,7 +338,7 @@ public class PartialScoreLSSR implements PartialScore {
 			result.lmatches = new LocalMatch[0];
 		}
 	
-		result.templatesize = new IntWritable(psc.templatesize.get() + templatesize.get());
+		result.templatesize = psc.templatesize + templatesize;
 		
 		result.cleanupLmatches();
 		
@@ -350,8 +348,8 @@ public class PartialScoreLSSR implements PartialScore {
 	public double computeScore(int inputsize) {
 
 		// Extract the best nr pairs (LSS consolidation)
-		int nr = Math.min(Math.min(inputsize, templatesize.get()), lmatches.length);
-		int np = computeNP(inputsize, templatesize.get());
+		int nr = Math.min(Math.min(inputsize, templatesize), lmatches.length);
+		int np = computeNP(inputsize, templatesize);
 
 		// Concatenate all similarity values
 		TopN<LocalMatch> bestmatches = new TopN<LocalMatch>(lmatches, nr);

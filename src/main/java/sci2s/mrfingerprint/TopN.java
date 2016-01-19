@@ -145,6 +145,16 @@ public class TopN<E extends Comparable<? super E>> implements Iterable<E>, Colle
 		return set.toArray();
 	}
 	
+	@Override
+	public String toString() {
+		String res = new String();
+		
+		for(E elem : set)
+			res += elem.toString() + ',';
+		
+		return res;
+	}
+	
 //	public E[] toArray(E[] c) {
 //		return set.toArray(c);
 //	}

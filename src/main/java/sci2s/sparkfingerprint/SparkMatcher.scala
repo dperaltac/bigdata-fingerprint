@@ -111,15 +111,13 @@ object SparkMatcher {
       .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .set("spark.kryoserializer.buffer.max", "512m")
       .set("spark.kryo.registrationRequired", "false")
-      .set("spark.hadoop.cloneConf", "true")//.setMaster("local[*]")
+      .set("spark.hadoop.cloneConf", "true").setMaster("local[*]")
       
       // Register classes for serialization
       conf.registerKryoClasses(Array(
           classOf[sci2s.mrfingerprint.LSCylinderArray],
-          classOf[org.apache.hadoop.io.Text],classOf[sci2s.mrfingerprint.GenericLSWrapper],
+          classOf[org.apache.hadoop.io.Text],
           classOf[sci2s.mrfingerprint.LocalStructureCylinder],
-          classOf[sci2s.mrfingerprint.LocalStructureJiang],
-          classOf[Array [scala.Tuple2[Any,Any]]],
           classOf[org.apache.hadoop.mapred.JobConf]))
 
       // Set SparkContext
