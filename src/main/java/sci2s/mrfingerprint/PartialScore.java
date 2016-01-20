@@ -19,7 +19,7 @@ public interface PartialScore extends Writable {
 	public PartialScore aggregateSinglePS(PartialScore ps);
 	
 	// For Spark: get the score from a single PS (when the aggregation is finished)
-	public double computeScore(int inputsize);
+	public double computeScore(String input_fpid, Map<?, ?> infomap);
 	
 	public void saveInfoFile(LocalStructure[][] inputls, Configuration conf);
 

@@ -13,7 +13,7 @@ import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.Writable;
 
 
-public class PartialScoreLSSR implements PartialScore {
+public class PartialScoreLSSR implements PartialScoreMCC {
 	
 	static protected class LocalMatch implements Comparable<LocalMatch>, Writable {
 
@@ -361,6 +361,12 @@ public class PartialScoreLSSR implements PartialScore {
 			bestscores[i] = bestlm[i].sl;
 		
 		return consolidation(bestscores, bestlm, np);
+	}
+
+	public double computeScore(String input_fpid, Map<?, ?> infomap) {
+
+		Integer inputsize = (Integer) infomap.get(input_fpid);
+		return computeScore(inputsize);
 	}
 	
 	protected double consolidation(double [] bestscores, LocalMatch[] bestlm, int np)

@@ -2,12 +2,10 @@ package sci2s.mrfingerprint;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -15,13 +13,7 @@ import java.util.Set;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.ArrayWritable;
-import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.util.ReflectionUtils;
-import org.apache.zookeeper.common.IOUtils;
-
-import com.google.common.collect.Lists;
 
 
 public class PartialScoreJiang implements PartialScore {
@@ -81,8 +73,6 @@ public class PartialScoreJiang implements PartialScore {
 			arg0.writeDouble(sl);
 		}
 	}
-	
-//	protected static final Builder<LocalMatch> PriorityQueueBuilder = MinMaxPriorityQueue.orderedBy(LocalMatch.invertedComparator()).maximumSize(BEST);
 	
 	public PartialScoreJiang() {
 		lsjv = null;
@@ -190,123 +180,19 @@ public class PartialScoreJiang implements PartialScore {
 
 		PartialScoreJiang bestps = new PartialScoreJiang(values);
 
-		// If the most similar pair has similarity 0, no need to say more
-		if(bestps.lmatches.isEmpty() || bestps.lmatches.first().sl == 0)
-			return 0.0;
-		
-		ArrayList<LocalStructureJiang> templatels = Lists.newArrayList(bestps.lsjv);
-		
-		@SuppressWarnings("unchecked")
-		ArrayList<LocalStructureJiang> inputls = (ArrayList<LocalStructureJiang>) infomap.get(key.getFpidInput().toString());
-		
-	
-		// Sort the local structures, so that the LSID corresponds to the position in the array
-		Collections.sort(templatels);
-		Collections.sort(inputls);
-		
-		// Arrays for the transformed minutiae
-		double[][] template_Fg = new double[templatels.size()][];
-		double[][] input_Fg = new double[inputls.size()][];
-
-		double maxmlsum = 0.0;
-		PriorityQueue<LocalMatch> ml = new PriorityQueue<LocalMatch>(20, Collections.reverseOrder());
-
-		
-		Set<Integer> used_template = new HashSet<Integer>(templatels.size());
-		Set<Integer> used_input = new HashSet<Integer>(inputls.size());
-		
-		LocalMatch lm;
-
-		// For each of the BEST best local matchings
-		while((lm = bestps.lmatches.poll()) != null) {
-			
-			// Get the best minutia of each fingerprint
-			Minutia best_minutia_template = templatels.get(lm.b1).getMinutia();
-			Minutia best_minutia_input = inputls.get(lm.b2).getMinutia();
-			
-			// Transform all the LS of both fingerprints using the best minutiae pair.
-			for(int i = 0; i < templatels.size(); i++) {
-				template_Fg[i] = templatels.get(i).transformMinutia(best_minutia_template);
-			}
-			for(int i = 0; i < inputls.size(); i++) {
-				input_Fg[i] = inputls.get(i).transformMinutia(best_minutia_input);
-			}
-			
-			// Compute "ml" matrix, for all the pairs of transformed minutiae.	
-			ml.clear();
-			
-			for(int i = 0; i < templatels.size(); i++)
-				for(int j = 0; j < inputls.size(); j++) {
-					
-					boolean out = false;
-					
-					for(int k = 0; k < 3; k++)
-						out = out || (Math.abs(template_Fg[i][k] - input_Fg[j][k]) >= LocalStructureJiang.BG[k]);
-		
-					if(!out)
-						try {
-							ml.add(new LocalMatch(i, j, 0.5 + 0.5*templatels.get(i).similarity(inputls.get(j))));
-						} catch (LSException e) {									
-							System.err.println("MatchingReducer.reduce: error when computing the similarity for minutiae (" +
-									templatels.get(i).getFpid() + "," + templatels.get(i).getLSid() + ") and (" +
-						inputls.get(j).getFpid() + "," + inputls.get(j).getLSid() + ")");
-							e.printStackTrace();
-						}
-					
-				}
-	
-			// Compute the sum of "ml", avoiding to use the same minutia twice.
-			double mlsum = 0.0;
-			LocalMatch bestlm = null;
-			
-			used_template.clear();
-			used_input.clear();
-
-			while((bestlm = ml.poll()) != null) {
-				
-				if(!used_template.contains(bestlm.b1) && !used_input.contains(bestlm.b2)) {
-					mlsum += bestlm.sl;
-					
-					used_template.add(bestlm.b1);
-					used_input.add(bestlm.b2);
-				}
-			}
-
-			if(mlsum > maxmlsum)
-				maxmlsum = mlsum;
-		}
-		
-		return maxmlsum/Math.max(templatels.size(), inputls.size());
+		return bestps.computeScore(key.getFpidInput().toString(), infomap);
 	}
 	
 
-	public Map<String, List<LocalStructureJiang>> loadInfoFile(Configuration conf) {
-
-		String name = conf.get(Util.MAPFILENAMEPROPERTY, Util.MAPFILEDEFAULTNAME);
-    	MapFile.Reader infofile = Util.createMapFileReader(conf, name);
+	public static Map<String, LocalStructureJiang[]> loadInfoFile(Configuration conf) {
     	
-    	Map<String, List<LocalStructureJiang>> infomap = new HashMap<String, List<LocalStructureJiang>>();
-
-		@SuppressWarnings("rawtypes")
-		WritableComparable key = (WritableComparable) ReflectionUtils.newInstance(infofile.getKeyClass(), conf);
-		
-		ArrayWritable value = (new LocalStructureJiang().newArrayWritable());
-		
-		try {
-			while(infofile.next(key, value)) {
-				List<LocalStructureJiang> alsj = new ArrayList<LocalStructureJiang>(value.get().length);
-				
-				for(Writable lsj : value.get())
-					alsj.add((LocalStructureJiang) lsj);
-				infomap.put(key.toString(), alsj);
-			}
-		} catch (Exception e) {
-			System.err.println("PartialScoreJiang.loadInfoFile: unable to read fingerprint "
-					+ key + " in MapFile " + name + ": " + e.getMessage());
-			e.printStackTrace();
-		}
-		
-		IOUtils.closeStream(infofile);
+    	Map<String, LocalStructureJiang[]> infomap = new HashMap<String, LocalStructureJiang[]>();
+    	
+    	LocalStructure[][] ilsarray = LocalStructure.loadLSMapFile(conf);
+    	
+    	for(LocalStructure[] ails : ilsarray) {
+    		infomap.put(ails[0].getFpid(), (LocalStructureJiang[]) ails);
+    	}
 		
 		return infomap;
 	}
@@ -334,33 +220,125 @@ public class PartialScoreJiang implements PartialScore {
 		return new PartialScoreJiang(ls, als);
 	}
 
-//	@Override
-//	public PartialScore partialAggregate(PartialScoreKey key,
-//			Iterable<PartialScore> values, Map<?, ?> infomap) {
-//
-//		return new PartialScoreJiang(values);
-//	}
-
 	public PartialScore partialAggregateG(PartialScoreKey key,
 			Iterable<GenericPSWrapper> values, Map<?, ?> infomap) {
 
 		return new PartialScoreJiang(values);
 	}
 
-	public boolean isEmpty() {
-//		return (lmatches == null || lmatches.peek() == null || lmatches.peek().sl <= 0);
-		
+	public boolean isEmpty() {		
 		// All the local structures are needed for the consolidation, so they cannot be discarded
 		return false;
 	}
 
 	public PartialScore aggregateSinglePS(PartialScore ps) {
-		// TODO Auto-generated method stub
-		return null;
+		
+		PartialScoreJiang result = new PartialScoreJiang();
+		PartialScoreJiang psj = (PartialScoreJiang) ps;
+		
+		// Initialize member variables
+		result.lmatches = new TopN<LocalMatch>(lmatches);
+		result.lmatches.addAll(psj.lmatches);
+		result.lsjv = (LocalStructureJiang[]) ArrayUtils.addAll(lsjv, psj.lsjv);
+		
+		return result;
 	}
 
-	public double computeScore(int inputsize) {
-		// TODO Auto-generated method stub
-		return 0;
+	public double computeScore(String input_fpid, Map<?, ?> infomap) {
+		return computeScore((LocalStructureJiang[]) infomap.get(input_fpid));
 	}
+
+	public double computeScore(LocalStructureJiang [] inputls) {
+
+		// If the most similar pair has similarity 0, no need to say more
+		if(lmatches.isEmpty() || lmatches.first().sl == 0)
+			return 0.0;
+		
+		LocalStructureJiang [] templatels = lsjv;
+	
+		// Sort the local structures, so that the LSID corresponds to the position in the array
+		Arrays.sort(templatels);
+		Arrays.sort(inputls);
+		
+		// Arrays for the transformed minutiae
+		double[][] template_Fg = new double[templatels.length][];
+		double[][] input_Fg = new double[inputls.length][];
+
+		double maxmlsum = 0.0;
+		PriorityQueue<LocalMatch> ml = new PriorityQueue<LocalMatch>(20, Collections.reverseOrder());
+
+		
+		Set<Integer> used_template = new HashSet<Integer>(templatels.length);
+		Set<Integer> used_input = new HashSet<Integer>(inputls.length);
+		
+		LocalMatch lm;
+
+		// For each of the BEST best local matchings
+		while((lm = lmatches.poll()) != null) {
+			
+			// Get the best minutia of each fingerprint
+			Minutia best_minutia_template = templatels[lm.b1].getMinutia();
+			Minutia best_minutia_input = inputls[lm.b2].getMinutia();
+			
+			// Transform all the LS of both fingerprints using the best minutiae pair.
+			for(int i = 0; i < templatels.length; i++) {
+				template_Fg[i] = templatels[i].transformMinutia(best_minutia_template);
+			}
+			for(int i = 0; i < inputls.length; i++) {
+				input_Fg[i] = inputls[i].transformMinutia(best_minutia_input);
+			}
+			
+			// Compute "ml" matrix, for all the pairs of transformed minutiae.	
+			ml.clear();
+			
+			for(int i = 0; i < templatels.length; i++)
+				for(int j = 0; j < inputls.length; j++) {
+					
+					boolean out = false;
+					
+					for(int k = 0; k < 3; k++)
+						out = out || (Math.abs(template_Fg[i][k] - input_Fg[j][k]) >= LocalStructureJiang.BG[k]);
+		
+					if(!out)
+						try {
+							ml.add(new LocalMatch(i, j, 0.5 + 0.5*templatels[i].similarity(inputls[j])));
+						} catch (LSException e) {									
+							System.err.println("MatchingReducer.reduce: error when computing the similarity for minutiae (" +
+									templatels[i].getFpid() + "," + templatels[i].getLSid() + ") and (" +
+						inputls[j].getFpid() + "," + inputls[j].getLSid() + ")");
+							e.printStackTrace();
+						}
+					
+				}
+	
+			// Compute the sum of "ml", avoiding to use the same minutia twice.
+			double mlsum = 0.0;
+			LocalMatch bestlm = null;
+			
+			used_template.clear();
+			used_input.clear();
+
+			while((bestlm = ml.poll()) != null) {
+				
+				if(!used_template.contains(bestlm.b1) && !used_input.contains(bestlm.b2)) {
+					mlsum += bestlm.sl;
+					
+					used_template.add(bestlm.b1);
+					used_input.add(bestlm.b2);
+				}
+			}
+
+			if(mlsum > maxmlsum)
+				maxmlsum = mlsum;
+		}
+		
+		return maxmlsum/Math.max(templatels.length, inputls.length);
+	}
+	
+//	public double computeScore(Collection<LocalStructureJiang> inputls) {
+//		if(inputls instanceof ArrayList)
+//			return computeScore(inputls);
+//		else
+//			return computeScore(new ArrayList<LocalStructureJiang> (inputls));
+//	}
 }

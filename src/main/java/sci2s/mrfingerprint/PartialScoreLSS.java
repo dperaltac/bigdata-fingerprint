@@ -15,7 +15,7 @@ import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.Text;
 import org.apache.zookeeper.common.IOUtils;
 
-public class PartialScoreLSS implements PartialScore {
+public class PartialScoreLSS implements PartialScoreMCC {
 
 	protected double [] bestsimilarities;
 	protected int templatesize;
@@ -308,5 +308,11 @@ public class PartialScoreLSS implements PartialScore {
 
 		return sum/np;
 
+	}
+
+	public double computeScore(String input_fpid, Map<?, ?> infomap) {
+
+		Integer inputsize = (Integer) infomap.get(input_fpid);
+		return computeScore(inputsize);
 	}
 }
