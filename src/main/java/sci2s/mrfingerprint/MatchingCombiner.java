@@ -27,7 +27,7 @@ public class MatchingCombiner extends Reducer<PartialScoreKey, GenericPSWrapper,
 	@Override
 	public void reduce(PartialScoreKey key, Iterable<GenericPSWrapper> values, Context context) 
 			throws IOException, InterruptedException {
-	    
+
 	    context.progress();
 	
 		// Aggregate the PartialScore set.	 

@@ -32,7 +32,7 @@ public class MatchingReducer extends Reducer<PartialScoreKey, GenericPSWrapper, 
 	@Override
 	public void reduce(PartialScoreKey key, Iterable<GenericPSWrapper> values, Context context) 
 			throws IOException, InterruptedException {
-	
+
 		// Aggregate the PartialScore set
 		double score = pssample.aggregateG(key, values, infomap);
 		

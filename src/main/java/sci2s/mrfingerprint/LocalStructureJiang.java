@@ -6,8 +6,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.StringTokenizer;
 
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.ArrayPrimitiveWritable;
 import org.apache.hadoop.io.ArrayWritable;
+import org.apache.hadoop.io.MapFile;
+import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.zookeeper.common.IOUtils;
 
 
 public class LocalStructureJiang extends LocalStructure {
@@ -200,5 +206,33 @@ public class LocalStructureJiang extends LocalStructure {
 	@Override
 	public ArrayWritable newArrayWritable() {
 		return new LSJiangArray();
+	}
+
+
+	public static LocalStructureJiang [][] loadLSMapFile(Configuration conf) {
+
+		String name = conf.get(Util.MAPFILENAMEPROPERTY, Util.MAPFILEDEFAULTNAME);
+    	MapFile.Reader lsmapfile = Util.createMapFileReader(conf, name);
+    	
+    	LocalStructureJiang [][] result = null;
+
+		WritableComparable<?> key = (WritableComparable<?>) ReflectionUtils.newInstance(lsmapfile.getKeyClass(), conf);
+
+		LSJiangArray value = (LSJiangArray) ReflectionUtils.newInstance(lsmapfile.getValueClass(), conf);
+		
+		try {
+			while(lsmapfile.next(key, value)) {
+				result = (LocalStructureJiang [][]) ArrayUtils.add(result,
+						Arrays.copyOf(value.get(), value.get().length, LocalStructureJiang[].class));
+			}
+		} catch (Exception e) {
+			System.err.println("LocalStructureJiang.loadLSMapFile: unable to read fingerprint "
+					+ key + " in MapFile " + name + ": " + e.getMessage());
+			e.printStackTrace();
+		}
+		
+		IOUtils.closeStream(lsmapfile);
+		
+		return result;		
 	}
 }

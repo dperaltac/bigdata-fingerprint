@@ -33,9 +33,8 @@ public class MatchingMapper extends Mapper<Text, LocalStructure, PartialScoreKey
 	throws IOException, InterruptedException {
 
 		// De-serialize the LocalStructure in "value"
-//		LocalStructure ls = (LocalStructure) value.get();
 		LocalStructure ls = value;
-		
+    	
 		GenericPSWrapper gpsw = new GenericPSWrapper();
 		
 		// Find the maximum similarity between that LS and all those from the input fingerprint (partial score)

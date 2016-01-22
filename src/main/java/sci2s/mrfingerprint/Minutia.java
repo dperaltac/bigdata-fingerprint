@@ -4,7 +4,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.StringTokenizer;
 
-import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
 
 /**
  * 
@@ -14,7 +14,7 @@ import org.apache.hadoop.io.Writable;
  * @author Daniel Peralta <dperalta@decsai.ugr.es>
  *
  */
-public class Minutia implements Writable, java.io.Serializable {
+public class Minutia implements WritableComparable<Minutia>, java.io.Serializable {
 	
 	/**
 	 * 
@@ -141,5 +141,20 @@ public class Minutia implements Writable, java.io.Serializable {
 		y = in.readInt();
 		theta = in.readDouble();
 		quality = in.readInt();
+	}
+
+	public int compareTo(Minutia o) {
+		int res;
+		
+		if((res = Integer.compare(index, o.index)) != 0)
+			return res;
+		else if((res = Integer.compare(x, o.x)) != 0)
+			return res;
+		else if((res = Integer.compare(y, o.y)) != 0)
+			return res;
+		else if((res = Double.compare(theta, o.theta)) != 0)
+			return res;
+		else
+			return Integer.compare(quality, o.quality);
 	}
 }

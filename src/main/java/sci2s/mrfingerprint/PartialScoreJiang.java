@@ -188,10 +188,10 @@ public class PartialScoreJiang implements PartialScore {
     	
     	Map<String, LocalStructureJiang[]> infomap = new HashMap<String, LocalStructureJiang[]>();
     	
-    	LocalStructure[][] ilsarray = LocalStructure.loadLSMapFile(conf);
+    	LocalStructureJiang [][] ilsarray = LocalStructureJiang.loadLSMapFile(conf);
     	
-    	for(LocalStructure[] ails : ilsarray) {
-    		infomap.put(ails[0].getFpid(), (LocalStructureJiang[]) ails);
+    	for(LocalStructureJiang[] ails : ilsarray) {
+    		infomap.put(ails[0].getFpid(), ails);
     	}
 		
 		return infomap;

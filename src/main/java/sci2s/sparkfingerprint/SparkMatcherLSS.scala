@@ -22,11 +22,9 @@ import sci2s.mrfingerprint.GenericLSWrapper
 import sci2s.mrfingerprint.LocalStructureCylinder
 import sci2s.mrfingerprint.LocalStructure
 import sci2s.mrfingerprint.PartialScoreLSS
-import sci2s.mrfingerprint.PartialScoreLSSR
-import sci2s.mrfingerprint.PartialScoreMCC
 
 
-object SparkMatcherMCC {
+object SparkMatcherLSS {
 
   class RDD2Partitioner(partitions: Int) extends HashPartitioner(partitions) {
   
@@ -38,7 +36,7 @@ object SparkMatcherMCC {
   }
   
   val usage = """
-    Usage: SparkMatcherMCC
+    Usage: SparkMatcherLSS
       [--matcher m]
       [--partial-score ps]
       [--template-file path]
@@ -171,7 +169,7 @@ object SparkMatcherMCC {
       println("Total time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
 	}
 
-  def computeScores1[PSType <: PartialScoreMCC](partialscore : String, templateLS : RDD[(String, LocalStructureCylinder)],
+  def computeScores1(partialscore : String, templateLS : RDD[(String, LocalStructureCylinder)],
       inputLS : Broadcast[Array[(String, LSCylinderArray)]]) = {
       
     val partialscores = templateLS.flatMap({ case (tid, ls) =>
@@ -182,13 +180,13 @@ object SparkMatcherMCC {
         // For each input fingerprint, compute the partial score with the template LS "ls"
         inputLS.value.map { ils => 
           val ilsarray = ils._2.get().map(elem => elem.asInstanceOf[LocalStructureCylinder]).filter(_.isValid())
-          val newps = constructor.newInstance(ls, ilsarray).asInstanceOf[PSType]
+          val newps = constructor.newInstance(ls, ilsarray).asInstanceOf[PartialScoreLSS]
           ((tid, ils._1), (newps, ilsarray.size))
         }
       })
         
       // Now we reduce all the partial scores of the same template fingerprint
-      .reduceByKey((v1, v2) => (v1._1.aggregateSinglePS(v2._1).asInstanceOf[PSType], v1._2))
+      .reduceByKey((v1, v2) => (v1._1.aggregateSinglePS(v2._1).asInstanceOf[PartialScoreLSS], v1._2))
       
       // Compute the final score using the np value
       .mapValues { case (ps, inputsize) => ps.computeScore(inputsize) }
@@ -196,7 +194,7 @@ object SparkMatcherMCC {
     partialscores
   }
 
-  def computeScores2[PSType <: PartialScoreMCC](partialscore : String, templateLS : RDD[(String, LocalStructureCylinder)],
+  def computeScores2(partialscore : String, templateLS : RDD[(String, LocalStructureCylinder)],
       inputLS : Broadcast[Array[(String, LSCylinderArray)]]) = {
       
     // First, compute the partial scores of each template LS with each input fingerprint.
@@ -208,7 +206,7 @@ object SparkMatcherMCC {
         // For each input fingerprint, compute the partial score with the template LS "ls"
         inputLS.value.map { ils => 
           val ilsarray = ils._2.get().map(elem => elem.asInstanceOf[LocalStructure])
-          val newps = constructor.newInstance(ls, ilsarray).asInstanceOf[PSType]
+          val newps = constructor.newInstance(ls, ilsarray).asInstanceOf[PartialScoreLSS]
           ((tid, ils._1), (newps, ilsarray.size))
         }
       }).partitionBy(new RDD2Partitioner(templateLS.partitioner.get.numPartitions)).persist
@@ -221,7 +219,7 @@ object SparkMatcherMCC {
       }
         
       // Now we reduce all the partial scores of the same pair of fingerprints
-      scores.reduceByKey((v1, v2) => (v1._1.aggregateSinglePS(v2._1).asInstanceOf[PSType], v1._2))
+      scores.reduceByKey((v1, v2) => (v1._1.aggregateSinglePS(v2._1).asInstanceOf[PartialScoreLSS], v1._2))
       
       // Compute the final score using the np value
       .mapValues { case (ps, inputsize) => ps.computeScore(inputsize) }
@@ -229,12 +227,12 @@ object SparkMatcherMCC {
     
   }
   
-  def generatePSFromSingleLS[PSType <: PartialScoreMCC](partialscore : String, ls : LocalStructure, ilsarray : Array[LocalStructure]): PSType = {
+  def generatePSFromSingleLS(partialscore : String, ls : LocalStructure, ilsarray : Array[LocalStructure]): PartialScoreLSS = {
     
         val PSClass = Class.forName("sci2s.mrfingerprint." + partialscore)
         val constructor = PSClass.getConstructor(classOf[LocalStructure], classOf[Array[LocalStructure]])
         
-        constructor.newInstance(ls, ilsarray).asInstanceOf[PSType]
+        constructor.newInstance(ls, ilsarray).asInstanceOf[PartialScoreLSS]
   }
 
 //  def computeScores3[PSType <: PartialScore](partialscore : String, templateLS : RDD[(String, LocalStructureCylinder)],
@@ -304,7 +302,7 @@ object SparkMatcherMCC {
 //  }
 
 
-  def computeScores4[PSType <: PartialScoreMCC](partialscore : String, templateLS : RDD[(String, LocalStructureCylinder)],
+  def computeScores4(partialscore : String, templateLS : RDD[(String, LocalStructureCylinder)],
       inputLS : Broadcast[Array[(String, LSCylinderArray)]]) : RDD[((String, String), Double)] = {
       
     // First, compute the partial scores of each template LS with each input fingerprint.
@@ -317,7 +315,7 @@ object SparkMatcherMCC {
           // For each input fingerprint, compute the partial score with the template LS "ls"
           inputLS.value.map { ils => 
             val ilsarray = ils._2.get().map(elem => elem.asInstanceOf[LocalStructure])
-            val newps = constructor.newInstance(ls, ilsarray).asInstanceOf[PSType]
+            val newps = constructor.newInstance(ls, ilsarray).asInstanceOf[PartialScoreLSS]
             ((tid, ils._1), (newps, ilsarray.size))
           }
         })
@@ -331,7 +329,7 @@ object SparkMatcherMCC {
 //      }
         
       // Now we reduce all the partial scores of the same pair of fingerprints
-      .reduceByKey((v1, v2) => (v1._1.aggregateSinglePS(v2._1).asInstanceOf[PSType], v1._2))
+      .reduceByKey((v1, v2) => (v1._1.aggregateSinglePS(v2._1).asInstanceOf[PartialScoreLSS], v1._2))
       
       // Compute the final score using the np value
       .mapValues { case (ps, inputsize) => ps.computeScore(inputsize) }
@@ -342,7 +340,7 @@ object SparkMatcherMCC {
 
 
 
-  def computeScores5[PSType <: PartialScoreMCC](partialscore : String, templateLS : RDD[(String, LocalStructureCylinder)],
+  def computeScores5(partialscore : String, templateLS : RDD[(String, LocalStructureCylinder)],
       inputLS : Broadcast[Array[(String, Array[LocalStructureCylinder])]]) : RDD[((String, String), Double)] = {
       
     // First, compute the partial scores of each template LS with each input fingerprint.
@@ -356,8 +354,8 @@ object SparkMatcherMCC {
 
           // For each template LS, compute the partial score with the input fingerprint ilsarray
           val score = tlsarray.map ({ ls =>
-            constructor.newInstance(ls, ils._2).asInstanceOf[PSType]
-            }).reduce(_.aggregateSinglePS(_).asInstanceOf[PSType]).computeScore(ils._2.size)
+            constructor.newInstance(ls, ils._2).asInstanceOf[PartialScoreLSS]
+            }).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreLSS]).computeScore(ils._2.size)
             
           ((tid, ils._1), score)
         }

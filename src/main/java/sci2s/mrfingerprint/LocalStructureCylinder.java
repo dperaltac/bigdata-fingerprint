@@ -6,9 +6,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.StringTokenizer;
 
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.ArrayPrimitiveWritable;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.BooleanWritable;
+import org.apache.hadoop.io.MapFile;
+import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.zookeeper.common.IOUtils;
 
 
 public class LocalStructureCylinder extends LocalStructure {
@@ -261,6 +267,11 @@ public class LocalStructureCylinder extends LocalStructure {
 	public Minutia getMinutia() {
 		return new Minutia(minutia);
 	}
+	
+	
+	protected Minutia getMinutiaRef() {
+		return minutia;
+	}
 
 
 	public static <T extends LocalStructure> T [] extractLocalStructures(Class<T> lsclass, String encoded) {
@@ -378,6 +389,35 @@ public class LocalStructureCylinder extends LocalStructure {
 	
 	public boolean isValid() {
 		return valid;
+	}
+
+
+
+	public static LocalStructureCylinder [][] loadLSMapFile(Configuration conf) {
+
+		String name = conf.get(Util.MAPFILENAMEPROPERTY, Util.MAPFILEDEFAULTNAME);
+    	MapFile.Reader lsmapfile = Util.createMapFileReader(conf, name);
+    	
+    	LocalStructureCylinder [][] result = null;
+
+		WritableComparable<?> key = (WritableComparable<?>) ReflectionUtils.newInstance(lsmapfile.getKeyClass(), conf);
+
+		LSCylinderArray value = (LSCylinderArray) ReflectionUtils.newInstance(lsmapfile.getValueClass(), conf);
+		
+		try {
+			while(lsmapfile.next(key, value)) {
+				result = (LocalStructureCylinder [][]) ArrayUtils.add(result,
+						Arrays.copyOf(value.get(), value.get().length, LocalStructureCylinder[].class));
+			}
+		} catch (Exception e) {
+			System.err.println("LocalStructureCylinder.loadLSMapFile: unable to read fingerprint "
+					+ key + " in MapFile " + name + ": " + e.getMessage());
+			e.printStackTrace();
+		}
+		
+		IOUtils.closeStream(lsmapfile);
+		
+		return result;		
 	}
 
 }

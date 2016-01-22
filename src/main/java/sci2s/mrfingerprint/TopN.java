@@ -101,6 +101,17 @@ public class TopN<E extends Comparable<? super E>> implements Iterable<E>, Colle
 			set.pollLast();
 	}
 	
+	public void setMax(int newsize) {
+		maxsize = newsize;
+		
+		if(maxsize < set.size())
+			truncate(maxsize);
+	}
+	
+	public int getMax() {
+		return maxsize;
+	}
+	
 	public E poll() {
 		return set.pollFirst();
 	}

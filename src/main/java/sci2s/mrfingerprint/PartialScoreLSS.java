@@ -15,7 +15,7 @@ import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.Text;
 import org.apache.zookeeper.common.IOUtils;
 
-public class PartialScoreLSS implements PartialScoreMCC {
+public class PartialScoreLSS implements PartialScore {
 
 	protected double [] bestsimilarities;
 	protected int templatesize;
