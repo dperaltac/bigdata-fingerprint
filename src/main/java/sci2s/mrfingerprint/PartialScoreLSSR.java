@@ -21,7 +21,6 @@ import org.apache.zookeeper.common.IOUtils;
 public class PartialScoreLSSR implements PartialScore {
 
 	protected Map<Integer, Minutia> tls;
-	//	Minutia [] tls;
 	protected TopN<LocalMatch> lmatches;
 
 	static protected class LocalMatch implements Comparable<LocalMatch>, Writable {
@@ -212,10 +211,6 @@ public class PartialScoreLSSR implements PartialScore {
 		auxaw.readFields(in);
 		Writable [] writables = auxaw.get();
 		tls = new HashMap<Integer, Minutia>(writables.length);
-		//		tls = new Minutia [writables.length];
-
-		//		for(int i = 0; i < writables.length; i++)
-		//			tls[i] = (Minutia) writables[i];
 
 		for(Writable w : writables) {
 			Minutia m = (Minutia) w;
@@ -229,23 +224,20 @@ public class PartialScoreLSSR implements PartialScore {
 		// Read the local matches
 		ArrayWritable auxaw2 = new ArrayWritable(LocalMatch.class);
 		auxaw2.readFields(in);
-
-		for(Writable w : auxaw2.get())
-			lmatches.add((LocalMatch) w);
+		lmatches.addAll((LocalMatch []) auxaw2.get());
 	}
 
 	public void write(DataOutput out) throws IOException {
 
 		// Write the template local structures
 		MinutiaArray auxaw = new MinutiaArray(tls.values().toArray(new Minutia[0]));
-		//		ArrayWritable auxaw = new ArrayWritable(Minutia.class, tls);
 		auxaw.write(out);
 
 		// Write nr
 		out.writeInt(lmatches.getMax());
 
 		// Write the local matches
-		ArrayWritable auxaw2 = new ArrayWritable(LocalMatch.class, lmatches.toArray(new Writable[0]));
+		ArrayWritable auxaw2 = new LocalMatchArray(lmatches.toArray(new LocalMatch[0]));
 		auxaw2.write(out);
 	}
 
@@ -408,7 +400,6 @@ public class PartialScoreLSSR implements PartialScore {
 		// Initialize member variables
 		result.lmatches.addAll(psc.lmatches);
 		result.tls.putAll(psc.tls);
-		//		result.tls = (Minutia[]) ArrayUtils.addAll(result.tls, psc.tls);
 
 		return result;
 	}
@@ -419,28 +410,26 @@ public class PartialScoreLSSR implements PartialScore {
 		int nr = Math.min(Math.min(inputmin.length, tls.size()), lmatches.size());
 		int np = computeNP(inputmin.length, tls.size());
 
-		// Concatenate all similarity values
-		double [] bestscores = new double[nr];
-
 		lmatches.truncate(nr);
 		LocalMatch[] bestlm = lmatches.toArray(new LocalMatch[nr]);
 
-		for(int i = 0; i < nr; i++)
-			bestscores[i] = bestlm[i].sl;
-
-		return consolidation(inputmin, bestscores, bestlm, np);
+		return consolidation(inputmin, bestlm, np);
 	}
 
 	public double computeScore(String input_fpid, Map<?, ?> infomap) {
 		return computeScore((Minutia []) infomap.get(input_fpid));
 	}
 
-	protected double consolidation(Minutia [] inputmin, double [] bestscores, LocalMatch[] bestlm, int np)
+	protected double consolidation(Minutia [] inputmin, LocalMatch[] bestlm, int np)
 	{
-		double [] lambdaT = Arrays.copyOf(bestscores, bestscores.length);
+		int nr = bestlm.length;
+
+		double [] lambdaT = new double[bestlm.length];
 		double [] lambdaT1 = new double[lambdaT.length];
 
-		int nr = bestscores.length;
+		// Concatenate all similarity values
+		for(int i = 0; i < nr; i++)
+			lambdaT[i] = bestlm[i].sl;
 
 		final double LAMBDAWEIGHT = (1.0-WR)/(nr-1.0);
 
@@ -448,7 +437,6 @@ public class PartialScoreLSSR implements PartialScore {
 
 		double sum = 0.0;
 
-		//		Arrays.sort(tls);
 		Arrays.sort(inputmin);
 
 		for (int j=0; j<nr; j++)
@@ -456,9 +444,7 @@ public class PartialScoreLSSR implements PartialScore {
 				if (k!=j)
 					rhotab[j][k] = rho(
 							tls.get(bestlm[j].b1),
-							//							tls[bestlm[j].b1],
 							inputmin[bestlm[j].b2],
-							//							tls[bestlm[k].b1],
 							tls.get(bestlm[k].b1),
 							inputmin[bestlm[k].b2]);
 				else
@@ -484,7 +470,7 @@ public class PartialScoreLSSR implements PartialScore {
 		double [] efficiency = new double[nr];
 
 		for (int i=0; i<nr; i++)
-			efficiency[i] = lambdaT[i] / bestscores[i];
+			efficiency[i] = lambdaT[i] / bestlm[i].sl;
 
 		Integer [] besteffidx = Util.sortIndexes(efficiency);
 

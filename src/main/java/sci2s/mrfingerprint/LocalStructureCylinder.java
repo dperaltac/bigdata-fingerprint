@@ -10,7 +10,6 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.ArrayPrimitiveWritable;
 import org.apache.hadoop.io.ArrayWritable;
-import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.util.ReflectionUtils;
@@ -46,29 +45,10 @@ public class LocalStructureCylinder extends LocalStructure {
 	public static final double DELTAZETA = 1.57079633;
 	public static final int MINCELLS = (int)Math.floor(MINME*NUMCELLS);
 	
-//	protected int minquality = 0;
-	public static final int MIN_QUALITY = 30;
-	
 	protected double[] cm_vector;
 	
 	protected Minutia minutia;
 	protected boolean valid;
-	
-//	public void setMinQuality(int m) {
-//		minquality = m;
-//	}
-//	
-//	public static void setMinQuality(LocalStructureCylinder [] v, double alpha) {
-//
-//		int [] q = new int[v.length];
-//		for(int i = 0; i < v.length; i++)
-//			q[i] = v[i].minutia.getQuality();
-//		
-//		Arrays.sort(q);
-//		
-//		for(LocalStructureCylinder ls : v)
-//			ls.setMinQuality(q[(int) Math.round(alpha)]);
-//	}
 	
 	public LocalStructureCylinder() {
 		super();
@@ -318,11 +298,10 @@ public class LocalStructureCylinder extends LocalStructure {
 		super.write(out);
 		
 		ArrayPrimitiveWritable ow = new ArrayPrimitiveWritable(cm_vector);
-		BooleanWritable vw = new BooleanWritable(valid);
 		
 		ow.write(out);
 		minutia.write(out);
-		vw.write(out);
+		out.writeBoolean(valid);
 	}
 	
 	@Override
@@ -331,14 +310,12 @@ public class LocalStructureCylinder extends LocalStructure {
 		super.readFields(in);
 		
 		ArrayPrimitiveWritable ow = new ArrayPrimitiveWritable(cm_vector);
-		BooleanWritable vw = new BooleanWritable(valid);
 		
 		ow.readFields(in);
 		minutia.readFields(in);
-		vw.readFields(in);
+		valid = in.readBoolean();
 		
 		cm_vector = (double[]) ow.get();
-		valid = vw.get();
 	}
 	
 	@Override
@@ -405,7 +382,7 @@ public class LocalStructureCylinder extends LocalStructure {
 	}
 	
 	public boolean isValid() {
-		return valid && minutia.getQuality() >= MIN_QUALITY;
+		return valid;
 	}
 
 

@@ -13,30 +13,29 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.util.SizeEstimator
 
-import scala.collection.JavaConversions.IterableWrapper
-import scala.collection.JavaConversions.SeqWrapper
 import scala.collection.Iterable
 
 import sci2s.mrfingerprint.LSCylinderArray
-import sci2s.mrfingerprint.GenericLSWrapper
+//import sci2s.mrfingerprint.GenericLSWrapper
 import sci2s.mrfingerprint.LocalStructureCylinder
 import sci2s.mrfingerprint.LocalStructure
 import sci2s.mrfingerprint.PartialScoreLSSR
+import sci2s.mrfingerprint.PartialScore
 
 
 object SparkMatcherLSSR {
 
-  class RDD2Partitioner(partitions: Int) extends HashPartitioner(partitions) {
-  
-    override def getPartition(key: Any): Int = key match {
-      case (k1,k2) => super.getPartition(k1)
-      case _ => super.getPartition(key)
-    }
-  
-  }
+//  class RDD2Partitioner(partitions: Int) extends HashPartitioner(partitions) {
+//  
+//    override def getPartition(key: Any): Int = key match {
+//      case (k1,k2) => super.getPartition(k1)
+//      case _ => super.getPartition(key)
+//    }
+//  
+//  }
   
   val usage = """
-    Usage: SparkMatcherMCC
+    Usage: SparkMatcherLSSR
       [--matcher m]
       [--partial-score ps]
       [--template-file path]
@@ -47,8 +46,6 @@ object SparkMatcherLSSR {
   """
   
   type OptionMap = Map[Symbol, Any]
-  
-  var DEBUG = false
   
   def nextOption(map : OptionMap, list: List[String]) : OptionMap = {
     
@@ -68,9 +65,6 @@ object SparkMatcherLSSR {
                              nextOption(map ++ Map('outputdir -> value), tail)
       case "--num-partitions" :: value :: tail =>
                              nextOption(map ++ Map('numpartitions -> value.toInt), tail)
-      case "--debug" :: tail =>
-                             DEBUG = true
-                             nextOption(map, tail)
       case option :: tail => println("Unknown option "+option) 
                              System.exit(1)
                              map
@@ -126,43 +120,19 @@ object SparkMatcherLSSR {
           .mapValues(new LocalStructureCylinder(_))
           .filter({case (id, ls) => ls.isValid()})
 
-			// FOR DEBUGGING
-      if(DEBUG) {
-		    println("Number of template LS: %s".format(templateLS.count()))
-        
-        printSize("Template size: ", templateLS.collect())
-		    println("Time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
-      }
-
 			// Read input fingerprint(s)
 	    val inputLSRDD = sc.sequenceFile[String, LSCylinderArray](mapFileName)
         .mapValues(new LSCylinderArray(_).get().map(elem => elem.asInstanceOf[LocalStructureCylinder]))
       
       // Broadcast the input fingerprint(s)
       val inputLS = sc.broadcast(inputLSRDD.collect())
-
-			// FOR DEBUGGING
-      if(DEBUG) {
-        println("Number of input LS: %s".format(inputLSRDD.count))
-        printSize("LS size: ", inputLSRDD.collect())
-		    println("Time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
-      }
       
       // Compute the partial scores for each template ls
       val partialscores = computeScores5(partialScore, templateLS, inputLS)
       
       println("Partial scores computed. Time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
-
-      if(DEBUG) {
-        println("Number of scores: %s".format(partialscores.count()))
-        printSize("Partial score size: ", partialscores.collect())
-        println("\tPartial score sample: " + partialscores.first)
-        println("Time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
-//        partialscores.sortBy({case (k,v) => v}).foreach(println(_))
-      }
       
       // Sort by score and write output
-//      partialscores.sortBy({case (k,v) => v}).saveAsTextFile(outputDir)
       partialscores.saveAsTextFile(outputDir)
       
       // Print time
@@ -174,7 +144,7 @@ object SparkMatcherLSSR {
       inputLS : Broadcast[Array[(String, Array[LocalStructureCylinder])]]) : RDD[((String, String), Double)] = {
       
     // First, compute the partial scores of each template LS with each input fingerprint.
-    val scores = templateLS.groupByKey().flatMap({ case (tid, tlsarray) =>
+    templateLS.groupByKey().flatMap({ case (tid, tlsarray) =>
 
         val PSClass = Class.forName("sci2s.mrfingerprint." + partialscore)
         val constructor = PSClass.getConstructor(classOf[LocalStructure], classOf[Array[LocalStructure]])
@@ -186,21 +156,12 @@ object SparkMatcherLSSR {
 
           // For each template LS, compute the partial score with the input fingerprint ilsarray
           val score = tlsarray.map ({ ls =>
-            constructor.newInstance(ls, ils._2).asInstanceOf[PartialScoreLSSR]
-            }).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreLSSR]).computeScore(minutiae)
+            constructor.newInstance(ls, ils._2).asInstanceOf[PartialScore]
+            }).reduce(_.aggregateSinglePS(_)).asInstanceOf[PartialScoreLSSR].computeScore(minutiae)
             
           ((tid, ils._1), score)
         }
       })
-      
-      if(DEBUG) {
-        val tmp = scores.collect()
-        printSize("Partitioned partial scores size: ", tmp)
-        println("\tPartitioned partial score number: " + tmp.size)
-        println("\tPartitioned partial score sample: " + tmp(0))
-      }
-      
-      scores
   }
   
 }

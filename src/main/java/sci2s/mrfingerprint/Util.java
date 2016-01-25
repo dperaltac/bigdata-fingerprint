@@ -104,7 +104,7 @@ public class Util {
 	
 	public static double doLeft(double z)
 	{
-		return (1.0+Erf.erf(z*0.707106781))*0.5;
+		return (1.0+Erf.erf(z*0.707106781))/2;
 	}
 	
 	public static double DistanceFromLine(double cx, double cy, double ax, double ay ,
