@@ -45,13 +45,30 @@ public class LocalStructureCylinder extends LocalStructure {
 	public static final double DELTAS = (2.0*R)/NS;
 	public static final double DELTAZETA = 1.57079633;
 	public static final int MINCELLS = (int)Math.floor(MINME*NUMCELLS);
-
 	
+//	protected int minquality = 0;
+	public static final int MIN_QUALITY = 30;
 	
 	protected double[] cm_vector;
 	
 	protected Minutia minutia;
 	protected boolean valid;
+	
+//	public void setMinQuality(int m) {
+//		minquality = m;
+//	}
+//	
+//	public static void setMinQuality(LocalStructureCylinder [] v, double alpha) {
+//
+//		int [] q = new int[v.length];
+//		for(int i = 0; i < v.length; i++)
+//			q[i] = v[i].minutia.getQuality();
+//		
+//		Arrays.sort(q);
+//		
+//		for(LocalStructureCylinder ls : v)
+//			ls.setMinQuality(q[(int) Math.round(alpha)]);
+//	}
 	
 	public LocalStructureCylinder() {
 		super();
@@ -388,7 +405,7 @@ public class LocalStructureCylinder extends LocalStructure {
 	}
 	
 	public boolean isValid() {
-		return valid;
+		return valid && minutia.getQuality() >= MIN_QUALITY;
 	}
 
 
