@@ -224,7 +224,9 @@ public class PartialScoreLSSR implements PartialScore {
 		// Read the local matches
 		ArrayWritable auxaw2 = new ArrayWritable(LocalMatch.class);
 		auxaw2.readFields(in);
-		lmatches.addAll((LocalMatch []) auxaw2.get());
+		
+		for(Writable w : auxaw2.get())
+			lmatches.add((LocalMatch) w);
 	}
 
 	public void write(DataOutput out) throws IOException {
