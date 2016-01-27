@@ -138,21 +138,37 @@ public class PartialScoreLSSR implements PartialScore {
 				lmatches.setMax(psc.lmatches.getMax());
 
 			lmatches.addAll(psc.lmatches);
-			//			tls = (Minutia[]) ArrayUtils.addAll(tls, psc.tls);
 			tls.putAll(psc.tls);
 		}
+	}
+
+	// Parameter constructor. Performs the partialAggregate operation.
+	public static PartialScoreLSSR partialAggregateG(Iterable<PartialScoreLSSR> values) {
+
+		PartialScoreLSSR result = new PartialScoreLSSR();
+		
+		result.lmatches = new TopN<LocalMatch>(MAX_LMATCHES);
+		result.tls = new HashMap<Integer, Minutia>();
+
+		for(PartialScoreLSSR psc : values) {
+
+			if(psc.lmatches.getMax() < result.lmatches.getMax())
+				result.lmatches.setMax(psc.lmatches.getMax());
+
+			result.lmatches.addAll(psc.lmatches);
+			result.tls.putAll(psc.tls);
+		}
+		
+		return result;
 	}
 
 	public PartialScoreLSSR (LocalStructure ls, LocalStructure[] als) {
 
 		double sl;
-		//		tls = new Minutia[1];
-		//		tls[0] = ((LocalStructureCylinder) ls).getMinutia();
 
 		// If the cylinder is not valid, no partial score is computed
 		if(!((LocalStructureCylinder) ls).isValid()) {
 
-			//			lmatches = new TopN<LocalMatch>(als.length);
 			tls = null;
 			lmatches = null;
 
@@ -394,16 +410,26 @@ public class PartialScoreLSSR implements PartialScore {
 		return (lmatches == null || tls == null || tls.isEmpty() || lmatches.isEmpty());
 	}
 
-	public PartialScore aggregateSinglePS(PartialScore ps) {
+//	public PartialScore aggregateSinglePS(PartialScore ps) {
+//
+//		PartialScoreLSSR result = new PartialScoreLSSR(this);
+//		PartialScoreLSSR psc = (PartialScoreLSSR) ps;
+//
+//		// Initialize member variables
+//		result.lmatches.addAll(psc.lmatches);
+//		result.tls.putAll(psc.tls);
+//
+//		return result;
+//	}
 
-		PartialScoreLSSR result = new PartialScoreLSSR(this);
+	public PartialScore aggregateSinglePS(PartialScore ps) {
 		PartialScoreLSSR psc = (PartialScoreLSSR) ps;
 
 		// Initialize member variables
-		result.lmatches.addAll(psc.lmatches);
-		result.tls.putAll(psc.tls);
+		lmatches.addAll(psc.lmatches);
+		tls.putAll(psc.tls);
 
-		return result;
+		return this;
 	}
 
 	public double computeScore(Minutia [] inputmin) {

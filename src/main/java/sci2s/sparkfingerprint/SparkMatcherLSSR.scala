@@ -14,6 +14,7 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.util.SizeEstimator
 
 import scala.collection.Iterable
+import scala.collection.JavaConverters._
 
 import sci2s.mrfingerprint.LSCylinderArray
 //import sci2s.mrfingerprint.GenericLSWrapper
@@ -124,17 +125,17 @@ object SparkMatcherLSSR {
 	    val inputLSRDD = sc.sequenceFile[String, LSCylinderArray](mapFileName)
         .mapValues { elem =>
             val ilsarray = new LSCylinderArray(elem).get()
-            .map(elem => elem.asInstanceOf[LocalStructureCylinder])
+            .map(elem => elem.asInstanceOf[LocalStructure])
 //            .filter(_.isValid())
             
-            (ilsarray, ilsarray.map(_.getMinutia))
+            (ilsarray, ilsarray.map(_.asInstanceOf[LocalStructureCylinder].getMinutia))
       }
     
       // Broadcast the input fingerprint(s)
       val inputLS = sc.broadcast(inputLSRDD.collect())
       
       // Compute the partial scores for each template ls
-      val partialscores = computeScores5(partialScore, templateLS, inputLS)
+      val partialscores = computeScores5(templateLS, inputLS)
       
       println("Partial scores computed. Time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
       
@@ -146,26 +147,47 @@ object SparkMatcherLSSR {
 	}
 
 
-  def computeScores5(partialscore : String, templateLS : RDD[(String, LocalStructureCylinder)],
-      inputLS : Broadcast[Array[(String, (Array[LocalStructureCylinder], Array[Minutia]))]]) : RDD[(String, (String, Double))] = {
+  def computeScores5(templateLS : RDD[(String, LocalStructureCylinder)],
+      inputLS : Broadcast[Array[(String, (Array[LocalStructure], Array[Minutia]))]]) : RDD[(String, (String, Double))] = {
       
     // First, compute the partial scores of each template LS with each input fingerprint.
     templateLS.groupByKey().flatMapValues({ tlsarray =>
-
-        val PSClass = Class.forName("sci2s.mrfingerprint." + partialscore)
-        val constructor = PSClass.getConstructor(classOf[LocalStructure], classOf[Array[LocalStructure]])
     
         // For each input fingerprint, compute the partial score with tid
         inputLS.value.map { case (ifpid, (ils, minutiae)) =>
 
           // For each template LS, compute the partial score with the input fingerprint ilsarray
           val score = tlsarray.map ({ ls =>
-            constructor.newInstance(ls, ils).asInstanceOf[PartialScore]
+            new PartialScoreLSSR(ls, ils).asInstanceOf[PartialScore]
             }).reduce(_.aggregateSinglePS(_)).asInstanceOf[PartialScoreLSSR].computeScore(minutiae)
             
           (ifpid, score)
         }
       })
   }
+
+
+//  def computeScores6(templateLS : RDD[(String, LocalStructureCylinder)],
+//      inputLS : Broadcast[Array[(String, (Array[LocalStructure], Array[Minutia]))]]) : RDD[(String, (String, Double))] = {
+//      
+//    // First, compute the partial scores of each template LS with each input fingerprint.
+//    val partitionedScores = templateLS.mapPartitions({ part => 
+//      
+//      val ilsarray = inputLS.value
+//      
+//      val tmp3 = part.toIterable.groupBy(_._1).mapValues(_.map(_._2))
+//      
+//      tmp3.mapValues({
+//      tlsarray => 
+//        
+//        val tmp4 = ilsarray.map(ils => 
+//          (ils._1, tlsarray.map(new PartialScoreLSSR(_, ils._2._1)))
+//        ) //.reduce(_.aggregateSinglePS(_))
+//        
+//        tmp4.map(ps => (ps._1, PartialScoreLSSR.partialAggregateG(ps._2.asJava)))
+//    }).toIterator
+//    }, preservesPartitioning=true)
+//    
+//    partitionedScores.reduce({case (fpid, psarray) => .aggregateSinglePS(_))
   
 }
