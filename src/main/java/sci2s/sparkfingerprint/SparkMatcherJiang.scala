@@ -86,8 +86,6 @@ object SparkMatcherJiang {
       
       println(options)
 
-			val initialtime = System.currentTimeMillis
-
 			// Parameters
       val matcher = options.get('matcher).get.toString
       val partialScore = options.get('partialscore).get.toString
@@ -113,6 +111,8 @@ object SparkMatcherJiang {
 
       // Set SparkContext
       val sc = new SparkContext(conf)
+
+      val initialtime = System.currentTimeMillis
 
 			// Read template database
 			val templateLS = sc.sequenceFile[String, LocalStructureJiang](templateFile) //.partitionBy(new HashPartitioner(numPartitions))
@@ -141,7 +141,7 @@ object SparkMatcherJiang {
       }
       
       // Compute the partial scores for each template ls
-      val partialscores = computeScores5(partialScore, infoFileName, templateLS, inputLS)
+      val partialscores = computeScores5(templateLS, inputLS)
       
       println("Partial scores computed. Time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
 
@@ -161,22 +161,19 @@ object SparkMatcherJiang {
       println("Total time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
 	}
 
-  def computeScores5(partialscore : String, infoFileName : String,
+  def computeScores5(
       templateLS : RDD[(String, LocalStructureJiang)],
       inputLS : Broadcast[Array[(String, Array[LocalStructureJiang])]]) : RDD[((String, String), Double)] = {
       
     // First, compute the partial scores of each template LS with each input fingerprint.
     val scores = templateLS.groupByKey().flatMap({ case (tid, tlsarray) =>
-
-        val PSClass = Class.forName("sci2s.mrfingerprint." + partialscore)
-        val constructor = PSClass.getConstructor(classOf[LocalStructure], classOf[Array[LocalStructure]])
     
         // For each input fingerprint, compute the partial score with tid
         inputLS.value.map { ils =>
 
           // For each template LS, compute the partial score with the input fingerprint ilsarray
           val score = tlsarray.map ({ ls =>
-            constructor.newInstance(ls, ils._2).asInstanceOf[PartialScoreJiang]
+            new PartialScoreJiang(ls, ils._2.asInstanceOf[Array[LocalStructure]])
             }).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreJiang]).computeScore(ils._2)
             
           ((tid, ils._1), score)

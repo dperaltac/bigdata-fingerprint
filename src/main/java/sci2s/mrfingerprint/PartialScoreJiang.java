@@ -232,16 +232,14 @@ public class PartialScoreJiang implements PartialScore {
 	}
 
 	public PartialScore aggregateSinglePS(PartialScore ps) {
-		
-		PartialScoreJiang result = new PartialScoreJiang();
+	
 		PartialScoreJiang psj = (PartialScoreJiang) ps;
 		
 		// Initialize member variables
-		result.lmatches = new TopN<LocalMatch>(lmatches);
-		result.lmatches.addAll(psj.lmatches);
-		result.lsjv = (LocalStructureJiang[]) ArrayUtils.addAll(lsjv, psj.lsjv);
+		lmatches.addAll(psj.lmatches);
+		lsjv = (LocalStructureJiang[]) ArrayUtils.addAll(lsjv, psj.lsjv);
 		
-		return result;
+		return this;
 	}
 
 	public double computeScore(String input_fpid, Map<?, ?> infomap) {

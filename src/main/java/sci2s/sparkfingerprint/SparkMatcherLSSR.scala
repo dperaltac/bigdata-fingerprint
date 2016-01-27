@@ -89,8 +89,6 @@ object SparkMatcherLSSR {
       
       println(options)
 
-			val initialtime = System.currentTimeMillis
-
 			// Parameters
       val matcher = options.get('matcher).get.toString
       val partialScore = options.get('partialscore).get.toString
@@ -116,8 +114,10 @@ object SparkMatcherLSSR {
       // Set SparkContext
       val sc = new SparkContext(conf)
 
+      val initialtime = System.currentTimeMillis
+
 			// Read template database
-			val templateLS = sc.sequenceFile[String, LocalStructureCylinder](templateFile).partitionBy(new HashPartitioner(numPartitions))
+			val templateLS = sc.sequenceFile[String, LocalStructureCylinder](templateFile) //.partitionBy(new HashPartitioner(numPartitions))
           .mapValues(new LocalStructureCylinder(_))
           .filter({case (id, ls) => ls.isValid()})
 
@@ -165,29 +165,5 @@ object SparkMatcherLSSR {
         }
       })
   }
-
-
-//  def computeScores6(templateLS : RDD[(String, LocalStructureCylinder)],
-//      inputLS : Broadcast[Array[(String, (Array[LocalStructure], Array[Minutia]))]]) : RDD[(String, (String, Double))] = {
-//      
-//    // First, compute the partial scores of each template LS with each input fingerprint.
-//    val partitionedScores = templateLS.mapPartitions({ part => 
-//      
-//      val ilsarray = inputLS.value
-//      
-//      val tmp3 = part.toIterable.groupBy(_._1).mapValues(_.map(_._2))
-//      
-//      tmp3.mapValues({
-//      tlsarray => 
-//        
-//        val tmp4 = ilsarray.map(ils => 
-//          (ils._1, tlsarray.map(new PartialScoreLSSR(_, ils._2._1)))
-//        ) //.reduce(_.aggregateSinglePS(_))
-//        
-//        tmp4.map(ps => (ps._1, PartialScoreLSSR.partialAggregateG(ps._2.asJava)))
-//    }).toIterator
-//    }, preservesPartitioning=true)
-//    
-//    partitionedScores.reduce({case (fpid, psarray) => .aggregateSinglePS(_))
   
 }

@@ -263,7 +263,6 @@ public class PartialScoreLSS implements PartialScore {
 	public PartialScore aggregateSinglePS(PartialScore ps) {
 
 		PartialScoreLSS psc = (PartialScoreLSS) ps;
-		PartialScoreLSS result = new PartialScoreLSS();
 
 		final int MAX_SIMS = computeNP(250);
 
@@ -271,18 +270,18 @@ public class PartialScoreLSS implements PartialScore {
 			TopN<Double> topn = new TopN<Double>(ArrayUtils.toObject(bestsimilarities), MAX_SIMS);
 			topn.addAll(ArrayUtils.toObject(psc.bestsimilarities));
 
-			result.bestsimilarities = ArrayUtils.toPrimitive(topn.toArray(new Double[0]));
+			bestsimilarities = ArrayUtils.toPrimitive(topn.toArray(new Double[0]));
 		}
 		else if(psc.bestsimilarities.length + bestsimilarities.length > 0) {
-			result.bestsimilarities = ArrayUtils.addAll(bestsimilarities, psc.bestsimilarities);				
+			bestsimilarities = ArrayUtils.addAll(bestsimilarities, psc.bestsimilarities);				
 		}
 		else {
-			result.bestsimilarities = new double[0];
+			bestsimilarities = new double[0];
 		}
 
-		result.templatesize = psc.templatesize + templatesize;
+		templatesize = psc.templatesize + templatesize;
 
-		return result;
+		return this;
 	}
 
 	public void aggregateSingleValue(double value) {
