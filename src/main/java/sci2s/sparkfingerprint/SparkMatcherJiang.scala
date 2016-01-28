@@ -163,10 +163,10 @@ object SparkMatcherJiang {
 
   def computeScores5(
       templateLS : RDD[(String, LocalStructureJiang)],
-      inputLS : Broadcast[Array[(String, Array[LocalStructureJiang])]]) : RDD[((String, String), Double)] = {
+      inputLS : Broadcast[Array[(String, Array[LocalStructureJiang])]]) : RDD[(String, (String, Double))] = {
       
     // First, compute the partial scores of each template LS with each input fingerprint.
-    val scores = templateLS.groupByKey().flatMap({ case (tid, tlsarray) =>
+    val scores = templateLS.groupByKey().flatMapValues({ tlsarray =>
     
         // For each input fingerprint, compute the partial score with tid
         inputLS.value.map { ils =>
@@ -176,7 +176,7 @@ object SparkMatcherJiang {
             new PartialScoreJiang(ls, ils._2.asInstanceOf[Array[LocalStructure]])
             }).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreJiang]).computeScore(ils._2)
             
-          ((tid, ils._1), score)
+          (ils._1, score)
         }
       })
       
