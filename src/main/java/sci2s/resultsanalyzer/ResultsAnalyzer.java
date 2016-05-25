@@ -13,7 +13,6 @@ import org.apache.hadoop.util.ToolRunner;
 import com.google.common.base.Joiner;
 
 import sci2s.mrfingerprint.MRMatcher;
-import sci2s.mrfingerprint.Util;
 
 public class ResultsAnalyzer extends Configured implements Tool{
 

@@ -13,8 +13,6 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.util.SizeEstimator
 
-import scala.collection.JavaConversions.IterableWrapper
-import scala.collection.JavaConversions.SeqWrapper
 import scala.collection.JavaConverters._
 import scala.collection.Iterable
 

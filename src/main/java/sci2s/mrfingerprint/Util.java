@@ -224,6 +224,7 @@ public class Util {
 	
 
 
+	@SuppressWarnings("rawtypes")
 	public static LocalStructure [] readDistributedCacheFingerprint(Context context, String fpid) throws IOException {
 
 	    URI[] input_files = context.getCacheFiles();
@@ -250,6 +251,7 @@ public class Util {
 
 	
 
+	@SuppressWarnings("rawtypes")
 	public static MapFile.Writer createMapFileWriter(Configuration conf, String name, Class<? extends WritableComparable> keyclass, Class<? extends Writable> valueclass) {
 
     	MapFile.Writer file = null;

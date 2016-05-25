@@ -8,6 +8,7 @@ import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Reducer;
 
 
+@SuppressWarnings("rawtypes")
 public class CounterReducer extends Reducer<WritableComparable, Writable, WritableComparable, IntWritable> {
 
 

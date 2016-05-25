@@ -6,7 +6,7 @@
 	<inceptionYear>2008</inceptionYear>
 	<properties>
 		<encoding>UTF-8</encoding>
-		<scala.version>2.10.3</scala.version>
+		<scala.version>2.11.7</scala.version>
 	</properties>
 
 	<repositories>
@@ -50,8 +50,8 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-core_2.10</artifactId>
-			<version>1.5.1</version>
+			<artifactId>spark-core_2.11</artifactId>
+			<version>1.6.0</version>
 		</dependency>
 	</dependencies>
 

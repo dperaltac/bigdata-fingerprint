@@ -12,6 +12,7 @@ public class GenericPSWrapper extends GenericWritable {
 	@SuppressWarnings("rawtypes")
 	private static Class[] CLASSES = {
 		PartialScoreJiang.class,
+		PartialScoreJiangLocal.class,
 		PartialScoreLSS.class,
 		PartialScoreLSSR.class
 	};
