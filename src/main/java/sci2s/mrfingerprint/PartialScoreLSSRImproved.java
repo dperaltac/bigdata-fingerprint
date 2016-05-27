@@ -18,12 +18,10 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.zookeeper.common.IOUtils;
 
 
-public class PartialScoreLSSR implements PartialScore {
+public class PartialScoreLSSRImproved implements PartialScore {
 
 	protected Map<Integer, Minutia> tls;
 	protected TopN<LocalMatch> lmatches;
-	
-	public static final double NRFACTOR = 0.5; 
 
 	static protected class LocalMatch implements Comparable<LocalMatch>, Writable {
 
@@ -96,45 +94,42 @@ public class PartialScoreLSSR implements PartialScore {
 
 	public static final int MAX_LMATCHES = 250;
 
-	public PartialScoreLSSR() {
+	public PartialScoreLSSRImproved() {
 
 		tls = null;
 		lmatches = null;
 	}
 
-	public PartialScoreLSSR(PartialScoreLSSR o) {
+	public PartialScoreLSSRImproved(PartialScoreLSSRImproved o) {
 
 		tls = new HashMap<Integer, Minutia>(o.tls);
-		//		tls = Util.arraycopy(o.tls);
 		lmatches = new TopN<LocalMatch>(o.lmatches);
 	}
 
 	// Parameter constructor. Performs the partialAggregate operation.
-	public PartialScoreLSSR(Iterable<GenericPSWrapper> values, int nr) {
-
-		PartialScoreLSSR psc;
-		lmatches = new TopN<LocalMatch>((int)Math.floor(nr * NRFACTOR));
-		//		tls = new HashMap<Integer, LocalStructureCylinder>();
-
-		for(GenericPSWrapper ps : values) {
-			psc = (PartialScoreLSSR) ps.get();
-
-			lmatches.addAll(psc.lmatches);
-			tls.putAll(psc.tls);
-			//			tls = (Minutia[]) ArrayUtils.addAll(tls, psc.tls);
-		}
-	}
+//	public PartialScoreLSSRImproved(Iterable<GenericPSWrapper> values, int nr) {
+//
+//		PartialScoreLSSRImproved psc;
+//		lmatches = new TopN<LocalMatch>(nr);
+//
+//		for(GenericPSWrapper ps : values) {
+//			psc = (PartialScoreLSSRImproved) ps.get();
+//
+//			lmatches.addAll(psc.lmatches);
+//			tls.putAll(psc.tls);
+//		}
+//	}
 
 	// Parameter constructor. Performs the partialAggregate operation.
-	public PartialScoreLSSR(Iterable<GenericPSWrapper> values) {
+	public PartialScoreLSSRImproved(Iterable<GenericPSWrapper> values) {
 
-		PartialScoreLSSR psc;
+		PartialScoreLSSRImproved psc;
 
 		lmatches = new TopN<LocalMatch>(MAX_LMATCHES);
 		tls = new HashMap<Integer, Minutia>();
 
 		for(GenericPSWrapper ps : values) {
-			psc = (PartialScoreLSSR) ps.get();
+			psc = (PartialScoreLSSRImproved) ps.get();
 
 			if(psc.lmatches.getMax() < lmatches.getMax())
 				lmatches.setMax(psc.lmatches.getMax());
@@ -145,14 +140,14 @@ public class PartialScoreLSSR implements PartialScore {
 	}
 
 	// Parameter constructor. Performs the partialAggregate operation.
-	public static PartialScoreLSSR partialAggregateG(Iterable<PartialScoreLSSR> values) {
+	public static PartialScoreLSSRImproved partialAggregateG(Iterable<PartialScoreLSSRImproved> values) {
 
-		PartialScoreLSSR result = new PartialScoreLSSR();
+		PartialScoreLSSRImproved result = new PartialScoreLSSRImproved();
 		
 		result.lmatches = new TopN<LocalMatch>(MAX_LMATCHES);
 		result.tls = new HashMap<Integer, Minutia>();
 
-		for(PartialScoreLSSR psc : values) {
+		for(PartialScoreLSSRImproved psc : values) {
 
 			if(psc.lmatches.getMax() < result.lmatches.getMax())
 				result.lmatches.setMax(psc.lmatches.getMax());
@@ -164,7 +159,7 @@ public class PartialScoreLSSR implements PartialScore {
 		return result;
 	}
 
-	public PartialScoreLSSR (LocalStructure ls, LocalStructure[] als) {
+	public PartialScoreLSSRImproved (LocalStructure ls, LocalStructure[] als) {
 
 		double sl;
 
@@ -181,7 +176,7 @@ public class PartialScoreLSSR implements PartialScore {
 		tls.put(ls.getLSid(), ((LocalStructureCylinder) ls).getMinutia());
 
 		// als.length is an upper bound of the real nr
-		lmatches = new TopN<LocalMatch>((int)Math.floor(als.length * NRFACTOR));
+		lmatches = new TopN<LocalMatch>(als.length / 2);
 
 		for(int i = 0; i < als.length; i++) {
 
@@ -208,11 +203,9 @@ public class PartialScoreLSSR implements PartialScore {
 		String res = super.toString();
 
 		res += tls.size();
-		//		res += tls.length;
 
-		//		for(LocalStructureCylinder lsj : tls.values())
-		for(Minutia lsj : tls.values())
-			res += ";" + lsj.toString();
+		for(Minutia m : tls.values())
+			res += ";" + m.toString();
 
 
 		for(LocalMatch tmp : lmatches)
@@ -280,25 +273,14 @@ public class PartialScoreLSSR implements PartialScore {
 
 	public double aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
 
-		PartialScoreLSSR bestps = new PartialScoreLSSR(values);
+		PartialScoreLSSRImproved bestps = new PartialScoreLSSRImproved(values);
 
 		return bestps.computeScore(key.getFpidInput().toString(), infomap);
 	}
 
 	public PartialScore partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
-		return new PartialScoreLSSR(values);
+		return new PartialScoreLSSRImproved(values);
 	}
-
-	public static int computeNP(int n_A, int n_B)
-	{
-		return PartialScoreLSS.computeNP(n_A, n_B);
-	}
-
-	public static int computeNP(int n_A)
-	{
-		return PartialScoreLSS.computeNP(n_A);
-	}
-
 
 	// Saves the minutiae of the input local structures
 	public void saveInfoFile(LocalStructure[][] inputls, Configuration conf) {
@@ -396,7 +378,7 @@ public class PartialScoreLSSR implements PartialScore {
 	}
 
 	public PartialScore computePartialScore(LocalStructure ls, LocalStructure[] als) {
-		return new PartialScoreLSSR(ls, als);
+		return new PartialScoreLSSRImproved(ls, als);
 	}
 
 	public Map<?, ?> loadCombinerInfoFile(Configuration conf) {
@@ -412,6 +394,16 @@ public class PartialScoreLSSR implements PartialScore {
 		return (lmatches == null || tls == null || tls.isEmpty() || lmatches.isEmpty());
 	}
 
+	public static int computeNP(int n_A, int n_B)
+	{
+		return PartialScoreLSS.computeNP(n_A, n_B);
+	}
+
+	public static int computeNP(int n_A)
+	{
+		return PartialScoreLSS.computeNP(n_A);
+	}
+
 //	public PartialScore aggregateSinglePS(PartialScore ps) {
 //
 //		PartialScoreLSSR result = new PartialScoreLSSR(this);
@@ -425,7 +417,7 @@ public class PartialScoreLSSR implements PartialScore {
 //	}
 
 	public PartialScore aggregateSinglePS(PartialScore ps) {
-		PartialScoreLSSR psc = (PartialScoreLSSR) ps;
+		PartialScoreLSSRImproved psc = (PartialScoreLSSRImproved) ps;
 
 		// Initialize member variables
 		lmatches.addAll(psc.lmatches);
@@ -437,7 +429,7 @@ public class PartialScoreLSSR implements PartialScore {
 	public double computeScore(Minutia [] inputmin) {
 
 		// Extract the best nr pairs (LSS consolidation)
-		int nr = (int)Math.floor(Math.min(Math.min(inputmin.length, tls.size()), lmatches.size()/NRFACTOR) * NRFACTOR);
+		int nr = Math.min(Math.min(inputmin.length, tls.size()), lmatches.size());
 		int np = computeNP(inputmin.length, tls.size());
 
 		lmatches.truncate(nr);
