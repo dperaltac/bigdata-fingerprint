@@ -27,6 +27,8 @@ public class LocalStructureJiang extends LocalStructure {
 	public static final double W[] = {1, 0.3*180/Math.PI, 0.3*180/Math.PI};
 	public static final double BG[] = {8.0, Math.PI/6.0, Math.PI/6.0};
 	
+	public static final double LOCALBBOX[] = {180, 180, 0.75*Math.PI};
+	
 	protected double[] fv;
 	
 	protected Minutia minutia;
@@ -172,6 +174,12 @@ public class LocalStructureJiang extends LocalStructure {
 			throw new LSException("The similarity can only be computed for local structures of the same type");
 		
 		LocalStructureJiang lsj = (LocalStructureJiang) ls;
+		
+		// Check bounding box for the minutiae
+		if(Math.abs(minutia.getX()-lsj.minutia.getX()) >= LOCALBBOX[0] ||
+				Math.abs(minutia.getY()-lsj.minutia.getY()) >= LOCALBBOX[1] ||
+				Math.abs(Util.dFi(minutia.getrT(), lsj.minutia.getrT())) >= LOCALBBOX[2])
+			return 0.0;
 		
 		for(int k = 0; k < NN && sum < BL; k++) {
 			sum += Math.abs(fv[k]-lsj.fv[k]) * W[0];
