@@ -27,7 +27,7 @@ public class LocalStructureJiang extends LocalStructure {
 	public static final double W[] = {1, 0.3*180/Math.PI, 0.3*180/Math.PI};
 	public static final double BG[] = {8.0, Math.PI/6.0, Math.PI/6.0};
 	
-	public static final double LOCALBBOX[] = {180, 180, 0.75*Math.PI};
+	public static final double LOCALBBOX[] = {250, 250, 0.75*Math.PI};
 	
 	protected double[] fv;
 	

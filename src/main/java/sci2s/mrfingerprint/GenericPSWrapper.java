@@ -14,7 +14,9 @@ public class GenericPSWrapper extends GenericWritable {
 		PartialScoreJiang.class,
 		PartialScoreJiangLocal.class,
 		PartialScoreLSS.class,
-		PartialScoreLSSR.class
+		PartialScoreLSSR.class,
+		PartialScoreLSSImproved.class,
+		PartialScoreLSSRImproved.class
 	};
 	
 	@SuppressWarnings("unchecked")

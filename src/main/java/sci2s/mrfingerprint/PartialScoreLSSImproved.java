@@ -57,9 +57,7 @@ public class PartialScoreLSSImproved implements PartialScore {
 
 		// If the cylinder is not valid, no partial score is computed
 		if(!((LocalStructureCylinder) ls).isValid()) {
-
 			bestsimilarities = new double[0];
-
 			return;
 		}
 
@@ -118,7 +116,6 @@ public class PartialScoreLSSImproved implements PartialScore {
 
 			PartialScoreLSSImproved psc = (PartialScoreLSSImproved) ps.get();
 
-			// TODO : can be optimized?
 			for(double sl : psc.bestsimilarities)
 				best.add(sl);
 		}
