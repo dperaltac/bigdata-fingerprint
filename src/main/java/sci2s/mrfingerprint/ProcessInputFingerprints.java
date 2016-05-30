@@ -24,6 +24,7 @@ public class ProcessInputFingerprints extends Configured implements Tool{
 		System.err.println("\t-D PartialScore={PartialScoreJiang|PartialScoreLSS|PartialScoreLSSR}\tNo default");
 		System.err.println("\t-D MapFileName=<file> \tDefault: " + Util.MAPFILEDEFAULTNAME);
 		System.err.println("\t-D InfoFileName=<file>\tDefault: " + Util.INFOFILEDEFAULTNAME);
+		System.err.println("\t-D discarding\tOptional. Default: no discarding applied.");
 	}
 
 	public int run(String[] arg0) throws Exception {
@@ -95,7 +96,9 @@ public class ProcessInputFingerprints extends Configured implements Tool{
 	    @SuppressWarnings("unchecked")
 		Class<? extends LocalStructure> MatcherClass = (Class<? extends LocalStructure>) Util.getClassFromProperty(getConf(), "matcher");
 
-		LocalStructure [][] inputls = LocalStructure.extractLocalStructuresFromFile(MatcherClass, file);
+		boolean discarding = (getConf().get("discarding") == null);
+
+		LocalStructure [][] inputls = LocalStructure.extractLocalStructuresFromFile(MatcherClass, file, discarding);
 		
 		if(inputls.length == 0) {
 			System.err.println("processInputFingerprints: no input local structures could be read");

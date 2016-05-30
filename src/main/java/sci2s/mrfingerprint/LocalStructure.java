@@ -249,28 +249,27 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 		return minutiae;
 	}
 
-	public static <T extends LocalStructure> T [] extractLocalStructures(Class<T> lsclass, String encoded) {
+	public static <T extends LocalStructure> T [] extractLocalStructures(Class<T> lsclass, String encoded, boolean discarding) {
 		String fpid = decodeFpid(encoded);
 		ArrayList<Minutia> minutiae = decodeTextMinutiae(encoded);
 		
-		return extractLocalStructures(lsclass, fpid, minutiae);
+		return extractLocalStructures(lsclass, fpid, minutiae, discarding);
 	}
-
 	// TODO implement the automatic input from xyt files
-	public static <T extends LocalStructure> LocalStructure [][] extractLocalStructuresFromFile(Class<T> lsclass, String input_file) {
+	public static <T extends LocalStructure> LocalStructure [][] extractLocalStructuresFromFile(Class<T> lsclass, String input_file, boolean discarding) {
 		
 		String[] lines = Util.readFileByLines(input_file);
 		LocalStructure [][] result = new LocalStructure[lines.length][];
 		
 		for(int i = 0; i < lines.length; i++) {
-			result[i] = extractLocalStructures(lsclass, lines[i]);
+			result[i] = extractLocalStructures(lsclass, lines[i], discarding);
 		}
 
 		return result;
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <T extends LocalStructure> T [] extractLocalStructures(Class<T> lsclass, String fpid, ArrayList<Minutia> minutiae) {
+	public static <T extends LocalStructure> T [] extractLocalStructures(Class<T> lsclass, String fpid, ArrayList<Minutia> minutiae, boolean discarding) {
 
 		
 		if(lsclass == LocalStructureJiang.class) {
@@ -278,15 +277,16 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 			double[][] distance_matrix = computeDistance(minutiae);
 			int[][] neighborhood = computeNeighborhood(distance_matrix);
 
-			return (T[]) LocalStructureJiang.extractLocalStructures(fpid, minutiae, distance_matrix, neighborhood);
+			return (T[]) LocalStructureJiang.extractLocalStructures(fpid, minutiae, distance_matrix, neighborhood, discarding);
 		}
 
 		else if(lsclass == LocalStructureCylinder.class)
-			return (T[]) LocalStructureCylinder.extractLocalStructures(fpid, minutiae);
+			return (T[]) LocalStructureCylinder.extractLocalStructures(fpid, minutiae, discarding);
 			
 		else
 			return null;
 	}
+
 
 
 	protected static int[][] computeNeighborhood(double[][] distance_matrix) {

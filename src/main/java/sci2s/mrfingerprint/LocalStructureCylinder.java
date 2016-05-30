@@ -271,15 +271,15 @@ public class LocalStructureCylinder extends LocalStructure {
 	}
 
 
-	public static <T extends LocalStructure> T [] extractLocalStructures(Class<T> lsclass, String encoded) {
+	public static <T extends LocalStructure> T [] extractLocalStructures(Class<T> lsclass, String encoded, boolean discarding) {
 		String fpid = decodeFpid(encoded);
 		ArrayList<Minutia> minutiae = decodeTextMinutiae(encoded);
 		
-		return extractLocalStructures(lsclass, fpid, minutiae);
+		return extractLocalStructures(lsclass, fpid, minutiae, discarding);
 	}
 	
 	
-	public static LocalStructureCylinder [] extractLocalStructures(String fpid, ArrayList<Minutia> minutiae) {
+	public static LocalStructureCylinder [] extractLocalStructures(String fpid, ArrayList<Minutia> minutiae, boolean discarding) {
 		
 		LocalStructureCylinder [] ls = new LocalStructureCylinder[minutiae.size()];
 		

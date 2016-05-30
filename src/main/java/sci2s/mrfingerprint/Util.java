@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.math3.special.Erf;
@@ -207,7 +209,9 @@ public class Util {
     }
     
 
-	public static LocalStructure [][] readDistributedCacheFingerprints(URI[] input_files, Class<? extends LocalStructure> MatcherClass) throws IOException {
+	public static LocalStructure [][] readDistributedCacheFingerprints(URI[] input_files,
+			Class<? extends LocalStructure> MatcherClass,
+			boolean discarding) throws IOException {
 	    
 	    LocalStructure [][] inputls = null;
 
@@ -215,7 +219,7 @@ public class Util {
 	    // and store so that all maps and reduces can access.
 	    for(int i = 0; i < input_files.length; i++){
 //	    	inputls.addAll(LocalStructure.extractLocalStructuresFromFile(MatcherClass, FilenameUtils.getName(input_file.getPath())));
-	    	LocalStructure [][] ials = LocalStructure.extractLocalStructuresFromFile(MatcherClass, input_files[i].getPath());
+	    	LocalStructure [][] ials = LocalStructure.extractLocalStructuresFromFile(MatcherClass, input_files[i].getPath(), discarding);
 	    	inputls = (LocalStructure[][]) ArrayUtils.addAll(inputls, ials);
 	    }
 	    
@@ -225,7 +229,7 @@ public class Util {
 
 
 	@SuppressWarnings("rawtypes")
-	public static LocalStructure [] readDistributedCacheFingerprint(Context context, String fpid) throws IOException {
+	public static LocalStructure [] readDistributedCacheFingerprint(Context context, String fpid, boolean discarding) throws IOException {
 
 	    URI[] input_files = context.getCacheFiles();
 	    
@@ -240,7 +244,7 @@ public class Util {
 
 			for(String line : lines) {
 				if(LocalStructure.decodeFpid(line).equals(fpid))
-					return LocalStructure.extractLocalStructures(MatcherClass, line);
+					return LocalStructure.extractLocalStructures(MatcherClass, line, discarding);
 			}
 	    }
 	    
@@ -317,5 +321,24 @@ public class Util {
 		}
 		
 		return pos;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T> T[] removeNullsFromVector(final T[] v) {
+		List<T> list = new ArrayList<T>(Arrays.asList(v));
+		list.removeAll(Collections.singleton(null));
+		return (T[]) list.toArray();
+	}
+
+	public static LocalStructureCylinder[] removeNullsFromVector(final LocalStructureCylinder[] v) {
+		List<LocalStructureCylinder> list = new ArrayList<LocalStructureCylinder>(Arrays.asList(v));
+		list.removeAll(Collections.singleton(null));
+		return list.toArray(new LocalStructureCylinder[list.size()]);
+	}
+
+	public static LocalStructureJiang[] removeNullsFromVector(final LocalStructureJiang[] v) {
+		List<LocalStructureJiang> list = new ArrayList<LocalStructureJiang>(Arrays.asList(v));
+		list.removeAll(Collections.singleton(null));
+		return list.toArray(new LocalStructureJiang[list.size()]);
 	}
 }

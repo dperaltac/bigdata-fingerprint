@@ -27,7 +27,10 @@ public class LocalStructureJiang extends LocalStructure {
 	public static final double W[] = {1, 0.3*180/Math.PI, 0.3*180/Math.PI};
 	public static final double BG[] = {8.0, Math.PI/6.0, Math.PI/6.0};
 	
+	// Improvements
 	public static final double LOCALBBOX[] = {250, 250, 0.75*Math.PI};
+	public static final int MINDIST = 0;
+	public static final int MAXDIST = 50;
 	
 	protected double[] fv;
 	
@@ -114,17 +117,32 @@ public class LocalStructureJiang extends LocalStructure {
 		return new Minutia(minutia);
 	}
 	
-	public static LocalStructureJiang [] extractLocalStructures(String fpid, ArrayList<Minutia> minutiae, double[][] distance_matrix, int[][] neighborhood) {
+	public static LocalStructureJiang [] extractLocalStructures(String fpid,
+			ArrayList<Minutia> minutiae,
+			double[][] distance_matrix,
+			int[][] neighborhood,
+			boolean discarding) {
 		
 		LocalStructureJiang [] ls = new LocalStructureJiang[minutiae.size()];
 		
 		for(int i = 0; i < minutiae.size(); i++) {
-			ls[i] = new LocalStructureJiang(fpid, i, minutiae, i, distance_matrix[i], neighborhood[i]);
+
+			int firstnb = neighborhood[i][0];
+			int lastnb  = neighborhood[i][NN-1];
+			
+			if(!discarding || (distance_matrix[i][lastnb] <= MAXDIST && distance_matrix[i][firstnb] >= MINDIST))
+				ls[i] = new LocalStructureJiang(fpid, i, minutiae, i, distance_matrix[i], neighborhood[i]);
+			else {
+				System.out.println("Discarded: " + distance_matrix[i][firstnb] + ", " + distance_matrix[i][lastnb]);
+				ls[i] = null;
+			}
 		}
 		
-		return ls;
+		if(discarding)
+			return Util.removeNullsFromVector(ls);
+		else
+			return ls;
 	}
-	
 
 	
 	@Override
@@ -181,7 +199,21 @@ public class LocalStructureJiang extends LocalStructure {
 				Math.abs(Util.dFi(minutia.getrT(), lsj.minutia.getrT())) >= LOCALBBOX[2])
 			return 0.0;
 		
+		// Improvement: discard neighborhoods where the minutiae are very far or very close
+		
 		for(int k = 0; k < NN && sum < BL; k++) {
+			
+//			if(fv[k] >= MAXDIST || fv[k] <= MINDIST) {
+//				System.out.println("Discarding local structure " + lsid);
+//				return 0.0;
+//			}
+//
+//			if(lsj.fv[k] >= MAXDIST || lsj.fv[k] <= MINDIST) {
+//				System.out.println("Discarding local structure " + lsj.lsid);
+//				return 0.0;
+//			}
+
+			
 			sum += Math.abs(fv[k]-lsj.fv[k]) * W[0];
 			sum += Math.abs(Util.dFi(fv[k+NN], lsj.fv[k+NN])) * W[1];
 			sum += Math.abs(Util.dFi(fv[k+2*NN], lsj.fv[k+2*NN])) * W[2];
