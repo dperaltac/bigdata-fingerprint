@@ -138,7 +138,7 @@ object SparkMatcherNB {
       .mapValues(numls => PartialScoreLSS.computeNP(numls._1.toInt, numls._2.toInt)).persist
             
       // Apply global matching
-      val scores = localmatches.join(npbykey).aggregateByKey(new Array[Double](100))(
+      val scores = localmatches.join(npbykey).aggregateByKey(new Array[Float](100))(
             (acc, value) => topNs(acc :+ value._1, value._2),
             (acc1, acc2) => topNs(acc1 ++ acc2, acc1.size))
           .mapValues(bestls => bestls.sum / bestls.size)
@@ -159,8 +159,8 @@ object SparkMatcherNB {
 	}
 
   
-  def topNs(xs: TraversableOnce[Double], n: Int) = {
-    var ss = Array[Double]()
+  def topNs(xs: TraversableOnce[Float], n: Int) = {
+    var ss = Array[Float]()
 
     for(e <- xs) {
       if (ss.size < n) {

@@ -11,13 +11,13 @@ import org.apache.hadoop.io.ArrayPrimitiveWritable;
 
 public class PartialScoreLSSImproved implements PartialScore {
 
-	protected double [] bestsimilarities;
+	protected float [] bestsimilarities;
 
 	public static final int AVGNP = 5; //!< My arbitrary value for n_P
 
 	public PartialScoreLSSImproved() {
 
-		bestsimilarities = new double[0];
+		bestsimilarities = new float[0];
 
 	}
 
@@ -27,7 +27,7 @@ public class PartialScoreLSSImproved implements PartialScore {
 
 	}
 
-	public PartialScoreLSSImproved(double [] bs, int ts) {
+	public PartialScoreLSSImproved(float [] bs, int ts) {
 
 		bestsimilarities = Arrays.copyOf(bs, bs.length);
 	}
@@ -36,19 +36,19 @@ public class PartialScoreLSSImproved implements PartialScore {
 	// Parameter constructor. Performs the partialAggregateG operation.
 	public PartialScoreLSSImproved(Iterable<GenericPSWrapper> values) {
 
-		TopN<Double> best = new TopN<Double>(AVGNP);
+		TopN<Float> best = new TopN<Float>(AVGNP);
 		PartialScoreLSSImproved psc;
 
 		// Aggregate all similarity values
 		for(GenericPSWrapper ps : values) {
 			psc = (PartialScoreLSSImproved) ps.get();
 
-			for(double sl : psc.bestsimilarities)
+			for(float sl : psc.bestsimilarities)
 				if(sl > 0.0)
 					best.add(sl);
 		}
 
-		bestsimilarities = new double[best.size()];
+		bestsimilarities = new float[best.size()];
 		for(int i = 0; i < bestsimilarities.length; ++i)
 			bestsimilarities[i] = best.poll();
 	}
@@ -57,12 +57,12 @@ public class PartialScoreLSSImproved implements PartialScore {
 
 		// If the cylinder is not valid, no partial score is computed
 		if(!((LocalStructureCylinder) ls).isValid()) {
-			bestsimilarities = new double[0];
+			bestsimilarities = new float[0];
 			return;
 		}
 
-		TopN<Double> gamma = new TopN<Double>(AVGNP);
-		double sl;
+		TopN<Float> gamma = new TopN<Float>(AVGNP);
+		float sl;
 
 		for(LocalStructure ils : als) {
 
@@ -81,7 +81,7 @@ public class PartialScoreLSSImproved implements PartialScore {
 			}
 		}
 
-		bestsimilarities = new double[gamma.size()];
+		bestsimilarities = new float[gamma.size()];
 		for(int i = 0; i < bestsimilarities.length; ++i)
 			bestsimilarities[i] = gamma.poll();
 	}
@@ -95,7 +95,7 @@ public class PartialScoreLSSImproved implements PartialScore {
 
 		ArrayPrimitiveWritable auxaw = new ArrayPrimitiveWritable(bestsimilarities);
 		auxaw.readFields(in);
-		bestsimilarities = (double[]) auxaw.get();
+		bestsimilarities = (float[]) auxaw.get();
 	}
 
 	public void write(DataOutput out) throws IOException {
@@ -106,21 +106,21 @@ public class PartialScoreLSSImproved implements PartialScore {
 
 
 
-	public double aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
+	public float aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
 
-		double sum = 0.0;
-		TopN<Double> best = new TopN<Double>(AVGNP);
+		float sum = 0.0f;
+		TopN<Float> best = new TopN<Float>(AVGNP);
 
 		// Concatenate all similarity values
 		for(GenericPSWrapper ps : values) {
 
 			PartialScoreLSSImproved psc = (PartialScoreLSSImproved) ps.get();
 
-			for(double sl : psc.bestsimilarities)
+			for(float sl : psc.bestsimilarities)
 				best.add(sl);
 		}
 
-		for(Double b : best)
+		for(Float b : best)
 			sum += b;
 
 		return sum/AVGNP;
@@ -168,22 +168,22 @@ public class PartialScoreLSSImproved implements PartialScore {
 		PartialScoreLSSImproved psc = (PartialScoreLSSImproved) ps;
 
 		if(psc.bestsimilarities.length + bestsimilarities.length > AVGNP) {
-			TopN<Double> topn = new TopN<Double>(ArrayUtils.toObject(bestsimilarities), AVGNP);
+			TopN<Float> topn = new TopN<Float>(ArrayUtils.toObject(bestsimilarities), AVGNP);
 			topn.addAll(ArrayUtils.toObject(psc.bestsimilarities));
 
-			bestsimilarities = ArrayUtils.toPrimitive(topn.toArray(new Double[0]));
+			bestsimilarities = ArrayUtils.toPrimitive(topn.toArray(new Float[0]));
 		}
 		else if(psc.bestsimilarities.length + bestsimilarities.length > 0) {
 			bestsimilarities = ArrayUtils.addAll(bestsimilarities, psc.bestsimilarities);				
 		}
 		else {
-			bestsimilarities = new double[0];
+			bestsimilarities = new float[0];
 		}
 
 		return this;
 	}
 
-	public void aggregateSingleValue(double value) {
+	public void aggregateSingleValue(float value) {
 
 		int minpos = Util.minPosition(bestsimilarities);
 
@@ -191,12 +191,12 @@ public class PartialScoreLSSImproved implements PartialScore {
 			bestsimilarities[minpos] = value;
 	}
 
-	public double computeScore() {
+	public float computeScore() {
 
 		if(bestsimilarities.length == 0)
 			return 0;
 
-		double sum = 0.0;
+		float sum = 0.0f;
 
 		int np2 = Math.min(AVGNP, bestsimilarities.length);
 
@@ -207,7 +207,7 @@ public class PartialScoreLSSImproved implements PartialScore {
 
 	}
 
-	public double computeScore(String input_fpid, Map<?, ?> infomap) {
+	public float computeScore(String input_fpid, Map<?, ?> infomap) {
 
 		return computeScore();
 	}

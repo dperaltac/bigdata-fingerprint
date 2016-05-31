@@ -23,7 +23,7 @@ public class Minutia implements WritableComparable<Minutia>, java.io.Serializabl
 	protected int index;
 	protected int x;
 	protected int y;
-	protected double theta;
+	protected float theta;
 	protected int quality;
 	
 	public Minutia() {
@@ -45,7 +45,7 @@ public class Minutia implements WritableComparable<Minutia>, java.io.Serializabl
 		index = Integer.parseInt(st.nextToken());
 		x = Integer.parseInt(st.nextToken());
 		y = Integer.parseInt(st.nextToken());
-		theta = Double.parseDouble(st.nextToken());
+		theta = Float.parseFloat(st.nextToken());
 		quality = Integer.parseInt(st.nextToken());
 	}
 	
@@ -57,7 +57,7 @@ public class Minutia implements WritableComparable<Minutia>, java.io.Serializabl
 		quality = min.quality;
 	}
 	
-	public Minutia(int index, int x, int y, double theta, int quality) {
+	public Minutia(int index, int x, int y, float theta, int quality) {
 		this.index = index;
 		this.x = x;
 		this.y = y;
@@ -77,23 +77,23 @@ public class Minutia implements WritableComparable<Minutia>, java.io.Serializabl
 		return y;
 	}
 	
-	public double getTheta() {
+	public float getTheta() {
 		return theta;
 	}
 	
-	public double getcT() {
+	public float getcT() {
 		return (theta==0) ? 0 : (360-theta);
 	}
 	
-	public double getcnT() {
+	public float getcnT() {
 		return getcT() - 180;
 	}
 	
-	public double getcrnT() {
+	public float getcrnT() {
 		return getcnT() * Util.REGTORAD;
 	}
 	
-	public double getrT() {
+	public float getrT() {
 		return theta * Util.REGTORAD;
 	}
 	
@@ -101,19 +101,19 @@ public class Minutia implements WritableComparable<Minutia>, java.io.Serializabl
 		return quality;
 	}
 	
-	public double getDistance(Minutia m) {
-		return Math.sqrt((m.x-x)*(m.x-x) + (m.y-y)*(m.y-y));
+	public float getDistance(Minutia m) {
+		return (float) Math.sqrt((m.x-x)*(m.x-x) + (m.y-y)*(m.y-y));
 	}
 	
-	public double getSDistance(Minutia m) {
+	public float getSDistance(Minutia m) {
 		return (m.x-x)*(m.x-x) + (m.y-y)*(m.y-y);
 	}
 	
-	public double getDistance(double ox, double oy) {
-		return Math.sqrt((ox-x)*(ox-x) + (oy-y)*(oy-y));
+	public float getDistance(float ox, float oy) {
+		return (float) Math.sqrt((ox-x)*(ox-x) + (oy-y)*(oy-y));
 	}
 	
-	public double getSDistance(double ox, double oy) {
+	public float getSDistance(float ox, float oy) {
 		return (ox-x)*(ox-x) + (oy-y)*(oy-y);
 	}
 	
@@ -129,7 +129,7 @@ public class Minutia implements WritableComparable<Minutia>, java.io.Serializabl
 		out.writeInt(index);
 		out.writeInt(x);
 		out.writeInt(y);
-		out.writeDouble(theta);
+		out.writeFloat(theta);
 		out.writeInt(quality);
 		
 	}
@@ -139,7 +139,7 @@ public class Minutia implements WritableComparable<Minutia>, java.io.Serializabl
 		index = in.readInt();
 		x = in.readInt();
 		y = in.readInt();
-		theta = in.readDouble();
+		theta = in.readFloat();
 		quality = in.readInt();
 	}
 
@@ -152,7 +152,7 @@ public class Minutia implements WritableComparable<Minutia>, java.io.Serializabl
 			return res;
 		else if((res = Integer.compare(y, o.y)) != 0)
 			return res;
-		else if((res = Double.compare(theta, o.theta)) != 0)
+		else if((res = Float.compare(theta, o.theta)) != 0)
 			return res;
 		else
 			return Integer.compare(quality, o.quality);

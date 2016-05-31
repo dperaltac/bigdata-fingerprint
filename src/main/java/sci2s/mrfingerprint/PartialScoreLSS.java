@@ -17,17 +17,17 @@ import org.apache.zookeeper.common.IOUtils;
 
 public class PartialScoreLSS implements PartialScore {
 
-	protected double [] bestsimilarities;
+	protected float [] bestsimilarities;
 	protected int templatesize;
 
-	public static final double MUP = 20; //!< Sigmoid parameter 1 in the computation of n_P
-	public static final double TAUP = 0.4; //!< Sigmoid parameter 2 in the computation of n_P
+	public static final float MUP = 20; //!< Sigmoid parameter 1 in the computation of n_P
+	public static final float TAUP = 0.4f; //!< Sigmoid parameter 2 in the computation of n_P
 	public static final int MINNP = 4; //!< Minimum number of minutiae in the computation of n_P
 	public static final int MAXNP = 12; //!< Maximum number of minutiae in the computation of n_P
 
 	public PartialScoreLSS() {
 
-		bestsimilarities = new double[0];
+		bestsimilarities = new float[0];
 		templatesize = 0;
 
 	}
@@ -39,7 +39,7 @@ public class PartialScoreLSS implements PartialScore {
 
 	}
 
-	public PartialScoreLSS(double [] bs, int ts) {
+	public PartialScoreLSS(float [] bs, int ts) {
 
 		bestsimilarities = Arrays.copyOf(bs, bs.length);
 		templatesize = ts;
@@ -49,7 +49,7 @@ public class PartialScoreLSS implements PartialScore {
 	// Parameter constructor. Performs the partialAggregateG operation.
 	public PartialScoreLSS(Iterable<GenericPSWrapper> values, int np) {
 
-		TopN<Double> best = new TopN<Double>(np);
+		TopN<Float> best = new TopN<Float>(np);
 		PartialScoreLSS psc;
 
 		templatesize = 0;
@@ -58,14 +58,14 @@ public class PartialScoreLSS implements PartialScore {
 		for(GenericPSWrapper ps : values) {
 			psc = (PartialScoreLSS) ps.get();
 
-			for(double sl : psc.bestsimilarities)
+			for(float sl : psc.bestsimilarities)
 				if(sl > 0.0)
 					best.add(sl);
 
 			templatesize += psc.templatesize;
 		}
 
-		bestsimilarities = new double[best.size()];
+		bestsimilarities = new float[best.size()];
 		for(int i = 0; i < bestsimilarities.length; ++i)
 			bestsimilarities[i] = best.poll();
 	}
@@ -75,14 +75,14 @@ public class PartialScoreLSS implements PartialScore {
 		// If the cylinder is not valid, no partial score is computed
 		if(!((LocalStructureCylinder) ls).isValid()) {
 
-			bestsimilarities = new double[0];
+			bestsimilarities = new float[0];
 			templatesize = 1;
 
 			return;
 		}
 
-		TopN<Double> gamma = new TopN<Double>(computeNP(als.length));
-		double sl;
+		TopN<Float> gamma = new TopN<Float>(computeNP(als.length));
+		float sl;
 
 		for(LocalStructure ils : als) {
 
@@ -101,7 +101,7 @@ public class PartialScoreLSS implements PartialScore {
 			}
 		}
 
-		bestsimilarities = new double[gamma.size()];
+		bestsimilarities = new float[gamma.size()];
 		for(int i = 0; i < bestsimilarities.length; ++i)
 			bestsimilarities[i] = gamma.poll();
 
@@ -119,7 +119,7 @@ public class PartialScoreLSS implements PartialScore {
 
 		ArrayPrimitiveWritable auxaw = new ArrayPrimitiveWritable(bestsimilarities);
 		auxaw.readFields(in);
-		bestsimilarities = (double[]) auxaw.get();
+		bestsimilarities = (float[]) auxaw.get();
 	}
 
 	public void write(DataOutput out) throws IOException {
@@ -143,12 +143,12 @@ public class PartialScoreLSS implements PartialScore {
 
 
 
-	public double aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
+	public float aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
 
 		int tam = 0;
-		double sum = 0.0;
+		float sum = 0.0f;
 		Integer inputsize = (Integer) infomap.get(key.getFpidInput().toString());
-		TopN<Double> best = new TopN<Double>(computeNP(inputsize));
+		TopN<Float> best = new TopN<Float>(computeNP(inputsize));
 
 		if(inputsize == null) {
 			System.err.println("No infomap value found for key " + key.getFpidInput());
@@ -160,7 +160,7 @@ public class PartialScoreLSS implements PartialScore {
 
 			PartialScoreLSS psc = (PartialScoreLSS) ps.get();
 
-			for(double sl : psc.bestsimilarities)
+			for(float sl : psc.bestsimilarities)
 				best.add(sl);
 
 			tam += psc.templatesize;
@@ -267,16 +267,16 @@ public class PartialScoreLSS implements PartialScore {
 		final int MAX_SIMS = computeNP(250);
 
 		if(psc.bestsimilarities.length + bestsimilarities.length > MAX_SIMS) {
-			TopN<Double> topn = new TopN<Double>(ArrayUtils.toObject(bestsimilarities), MAX_SIMS);
+			TopN<Float> topn = new TopN<Float>(ArrayUtils.toObject(bestsimilarities), MAX_SIMS);
 			topn.addAll(ArrayUtils.toObject(psc.bestsimilarities));
 
-			bestsimilarities = ArrayUtils.toPrimitive(topn.toArray(new Double[0]));
+			bestsimilarities = ArrayUtils.toPrimitive(topn.toArray(new Float[0]));
 		}
 		else if(psc.bestsimilarities.length + bestsimilarities.length > 0) {
 			bestsimilarities = ArrayUtils.addAll(bestsimilarities, psc.bestsimilarities);				
 		}
 		else {
-			bestsimilarities = new double[0];
+			bestsimilarities = new float[0];
 		}
 
 		templatesize = psc.templatesize + templatesize;
@@ -284,7 +284,7 @@ public class PartialScoreLSS implements PartialScore {
 		return this;
 	}
 
-	public void aggregateSingleValue(double value) {
+	public void aggregateSingleValue(float value) {
 
 		int minpos = Util.minPosition(bestsimilarities);
 
@@ -292,10 +292,10 @@ public class PartialScoreLSS implements PartialScore {
 			bestsimilarities[minpos] = value;
 	}
 
-	public double computeScore(int inputsize) {
+	public float computeScore(int inputsize) {
 
 		int np = computeNP(inputsize, templatesize);
-		double sum = 0.0;
+		float sum = 0.0f;
 
 		int np2 = Math.min(np, bestsimilarities.length);
 
@@ -309,7 +309,7 @@ public class PartialScoreLSS implements PartialScore {
 
 	}
 
-	public double computeScore(String input_fpid, Map<?, ?> infomap) {
+	public float computeScore(String input_fpid, Map<?, ?> infomap) {
 
 		Integer inputsize = (Integer) infomap.get(input_fpid);
 		return computeScore(inputsize);

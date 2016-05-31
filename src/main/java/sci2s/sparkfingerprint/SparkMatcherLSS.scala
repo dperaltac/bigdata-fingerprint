@@ -337,7 +337,7 @@ object SparkMatcherLSS {
 
 
   def computeScores5(templateLS : RDD[(String, LocalStructureCylinder)],
-      inputLS : Broadcast[Array[(String, Array[LocalStructure])]]) : RDD[(String, (String, Double))] = {
+      inputLS : Broadcast[Array[(String, Array[LocalStructure])]]) : RDD[(String, (String, Float))] = {
       
     // First, compute the partial scores of each template LS with each input fingerprint.
     val scores = templateLS.groupByKey().flatMapValues({ tlsarray =>

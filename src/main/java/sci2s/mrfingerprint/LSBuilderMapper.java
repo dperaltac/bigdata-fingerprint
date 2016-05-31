@@ -24,7 +24,7 @@ public class LSBuilderMapper extends Mapper<LongWritable, Text, Text, LocalStruc
 		  MatcherClass = LocalStructureJiang.class;
 	  }
 	  
-	  boolean discarding = (context.getConfiguration().get("discarding") == null);
+	  boolean discarding = (context.getConfiguration().getBoolean("discarding", false));
 
 	  LocalStructure [] lslist = LocalStructure.extractLocalStructures(MatcherClass, value.toString(), discarding);		  
 	  

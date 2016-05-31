@@ -96,7 +96,7 @@ public class ProcessInputFingerprints extends Configured implements Tool{
 	    @SuppressWarnings("unchecked")
 		Class<? extends LocalStructure> MatcherClass = (Class<? extends LocalStructure>) Util.getClassFromProperty(getConf(), "matcher");
 
-		boolean discarding = (getConf().get("discarding") == null);
+	    boolean discarding = getConf().getBoolean("discarding", false);
 
 		LocalStructure [][] inputls = LocalStructure.extractLocalStructuresFromFile(MatcherClass, file, discarding);
 		

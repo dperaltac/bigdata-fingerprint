@@ -141,7 +141,7 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 		int index = 0;
 		int x = 0;
 		int y = 0;
-		double theta = 0;
+		float theta = 0;
 		int quality = 0;
 		
 		BufferedReader br;
@@ -168,7 +168,7 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 
 				x = Integer.parseInt(st.nextToken());
 				y = Integer.parseInt(st.nextToken());
-				theta = Double.parseDouble(st.nextToken())*2;
+				theta = Float.parseFloat(st.nextToken())*2;
 				quality = Integer.parseInt(st.nextToken());
 				
 				minutiae.add(new Minutia(index, x, y, theta, quality));
@@ -201,7 +201,7 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 		int index = 0;
 		int x = 0;
 		int y = 0;
-		double theta = 0;
+		float theta = 0;
 		int quality = 0;
 		ArrayList<Minutia> minutiae = new ArrayList<Minutia>();
 		
@@ -231,7 +231,7 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 				
 				x = Integer.parseInt(mintk.nextToken());
 				y = Integer.parseInt(mintk.nextToken());
-				theta = Double.parseDouble(mintk.nextToken())*2;
+				theta = Float.parseFloat(mintk.nextToken())*2;
 				quality = Integer.parseInt(mintk.nextToken());
 				
 				minutiae.add(new Minutia(index, x, y, theta, quality));
@@ -274,7 +274,7 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 		
 		if(lsclass == LocalStructureJiang.class) {
 		
-			double[][] distance_matrix = computeDistance(minutiae);
+			float[][] distance_matrix = computeDistance(minutiae);
 			int[][] neighborhood = computeNeighborhood(distance_matrix);
 
 			return (T[]) LocalStructureJiang.extractLocalStructures(fpid, minutiae, distance_matrix, neighborhood, discarding);
@@ -289,9 +289,9 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 
 
 
-	protected static int[][] computeNeighborhood(double[][] distance_matrix) {
+	protected static int[][] computeNeighborhood(float[][] distance_matrix) {
 		int [][] neighborhood = new int[distance_matrix.length][distance_matrix.length-1];
-		TreeMap<Double, Integer> map = new TreeMap<Double, Integer>();
+		TreeMap<Float, Integer> map = new TreeMap<Float, Integer>();
 	
 		for(int i = 0; i < neighborhood.length; i++) {
 			
@@ -303,7 +303,7 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 			}
 			
 			int j = 0;
-			for(Map.Entry<Double, Integer> entry : map.entrySet()) {
+			for(Map.Entry<Float, Integer> entry : map.entrySet()) {
 				neighborhood[i][j] = entry.getValue();
 				j++;
 			}
@@ -313,9 +313,9 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 	}
 
 
-	protected static double[][] computeDistance(ArrayList<Minutia> minutiae) {
+	protected static float[][] computeDistance(ArrayList<Minutia> minutiae) {
 
-		double [][] distance_matrix = new double[minutiae.size()][minutiae.size()];
+		float [][] distance_matrix = new float[minutiae.size()][minutiae.size()];
 
 		distance_matrix[0][0] = 0;
 		
@@ -415,6 +415,6 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 	}
 	
 	
-	abstract public double similarity(LocalStructure ls) throws LSException;
+	abstract public float similarity(LocalStructure ls) throws LSException;
 
 }

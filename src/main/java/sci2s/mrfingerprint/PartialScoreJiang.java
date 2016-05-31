@@ -28,12 +28,12 @@ public class PartialScoreJiang implements PartialScore {
 
 		public int b1;
 		public int b2;
-		public double sl;
+		public float sl;
 
 		public LocalMatch() {
 			b1 = 0;
 			b2 = 0;
-			sl = 0.0;
+			sl = 0.0f;
 		}
 		
 		public LocalMatch(LocalMatch o) {
@@ -42,14 +42,14 @@ public class PartialScoreJiang implements PartialScore {
 			sl = o.sl;
 		}
 		
-		public LocalMatch(int b1, int b2, double sl) {
+		public LocalMatch(int b1, int b2, float sl) {
 			this.b1 = b1;
 			this.b2 = b2;
 			this.sl = sl;
 		}
 
 		public int compareTo(LocalMatch arg0) {
-			int res = Double.compare(sl, arg0.sl);
+			int res = Float.compare(sl, arg0.sl);
 			
 			if(res == 0) {
 				res = Integer.compare(b1,arg0.b1);
@@ -64,13 +64,13 @@ public class PartialScoreJiang implements PartialScore {
 		public void readFields(DataInput arg0) throws IOException {
 			b1 = arg0.readInt();
 			b2 = arg0.readInt();
-			sl = arg0.readDouble();
+			sl = arg0.readFloat();
 		}
 
 		public void write(DataOutput arg0) throws IOException {
 			arg0.writeInt(b1);
 			arg0.writeInt(b2);
-			arg0.writeDouble(sl);
+			arg0.writeFloat(sl);
 		}
 	}
 	
@@ -97,7 +97,7 @@ public class PartialScoreJiang implements PartialScore {
 		for(LocalStructure ils : als) {
 
 			try {
-				double sl = ls.similarity(ils);
+				float sl = ls.similarity(ils);
 				
 				if(sl > 0.0)
 					lmatches.add(new LocalMatch(ls.getLSid(), ils.getLSid(), sl));
@@ -176,7 +176,7 @@ public class PartialScoreJiang implements PartialScore {
 	}
 
 
-	public double aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
+	public float aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
 
 		PartialScoreJiang bestps = new PartialScoreJiang(values);
 
@@ -242,15 +242,15 @@ public class PartialScoreJiang implements PartialScore {
 		return this;
 	}
 
-	public double computeScore(String input_fpid, Map<?, ?> infomap) {
+	public float computeScore(String input_fpid, Map<?, ?> infomap) {
 		return computeScore((LocalStructureJiang[]) infomap.get(input_fpid));
 	}
 
-	public double computeScore(LocalStructureJiang [] inputls) {
+	public float computeScore(LocalStructureJiang [] inputls) {
 
 		// If the most similar pair has similarity 0, no need to say more
 		if(lmatches.isEmpty() || lmatches.first().sl == 0)
-			return 0.0;
+			return 0.0f;
 		
 		LocalStructureJiang [] templatels = lsjv;
 	
@@ -259,10 +259,10 @@ public class PartialScoreJiang implements PartialScore {
 		Arrays.sort(inputls);
 		
 		// Arrays for the transformed minutiae
-		double[][] template_Fg = new double[templatels.length][];
-		double[][] input_Fg = new double[inputls.length][];
+		float[][] template_Fg = new float[templatels.length][];
+		float[][] input_Fg = new float[inputls.length][];
 
-		double maxmlsum = 0.0;
+		float maxmlsum = 0.0f;
 		PriorityQueue<LocalMatch> ml = new PriorityQueue<LocalMatch>(20, Collections.reverseOrder());
 
 		
@@ -299,7 +299,7 @@ public class PartialScoreJiang implements PartialScore {
 		
 					if(!out)
 						try {
-							ml.add(new LocalMatch(i, j, 0.5 + 0.5*templatels[i].similarity(inputls[j])));
+							ml.add(new LocalMatch(i, j, 0.5f + 0.5f*templatels[i].similarity(inputls[j])));
 						} catch (LSException e) {									
 							System.err.println("MatchingReducer.reduce: error when computing the similarity for minutiae (" +
 									templatels[i].getFpid() + "," + templatels[i].getLSid() + ") and (" +
@@ -310,7 +310,7 @@ public class PartialScoreJiang implements PartialScore {
 				}
 	
 			// Compute the sum of "ml", avoiding to use the same minutia twice.
-			double mlsum = 0.0;
+			float mlsum = 0.0f;
 			LocalMatch bestlm = null;
 			
 			used_template.clear();
@@ -333,7 +333,7 @@ public class PartialScoreJiang implements PartialScore {
 		return maxmlsum/Math.max(templatels.length, inputls.length);
 	}
 	
-//	public double computeScore(Collection<LocalStructureJiang> inputls) {
+//	public float computeScore(Collection<LocalStructureJiang> inputls) {
 //		if(inputls instanceof ArrayList)
 //			return computeScore(inputls);
 //		else

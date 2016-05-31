@@ -23,23 +23,23 @@ public class LocalStructureJiang extends LocalStructure {
 	 */
 	private static final long serialVersionUID = 1L;
 	public static final int NN = 2;
-	public static final double BL = 6*3*NN;
-	public static final double W[] = {1, 0.3*180/Math.PI, 0.3*180/Math.PI};
-	public static final double BG[] = {8.0, Math.PI/6.0, Math.PI/6.0};
+	public static final float BL = 6*3*NN;
+	public static final float W[] = {1, (float)(0.3*180/Math.PI), (float)(0.3*180/Math.PI)};
+	public static final float BG[] = {8.0f, (float)(Math.PI/6.0), (float)(Math.PI/6.0)};
 	
 	// Improvements
-	public static final double LOCALBBOX[] = {250, 250, 0.75*Math.PI};
+	public static final float LOCALBBOX[] = {250, 250, (float)(0.75*Math.PI)};
 	public static final int MINDIST = 0;
 	public static final int MAXDIST = 50;
 	
-	protected double[] fv;
+	protected float[] fv;
 	
 	protected Minutia minutia;
 	
 	public LocalStructureJiang() {
 		super();
 
-		fv = new double[3*NN];
+		fv = new float[3*NN];
 		minutia = new Minutia();
 	}
 	
@@ -69,12 +69,12 @@ public class LocalStructureJiang extends LocalStructure {
 			throw new LSException("LocalStructureJiang(String): error when reading \"" + stfv.toString() + "\": it has " + stfv.countTokens() + " instead of 3*NN = " + 3*NN);
 		}
 		
-		fv = new double[stfv.countTokens()];
+		fv = new float[stfv.countTokens()];
 		
 		int i = 0;
 		
 		while(stfv.hasMoreTokens()) {
-			fv[i] = Double.parseDouble(stfv.nextToken());
+			fv[i] = Float.parseFloat(stfv.nextToken());
 			i++;
 		}
 	}
@@ -82,18 +82,18 @@ public class LocalStructureJiang extends LocalStructure {
 	public LocalStructureJiang(String fpid, int lsid) {
 
 		super(fpid,lsid);
-		fv = new double[3*NN];
+		fv = new float[3*NN];
 		minutia = new Minutia();
 	}
 	
-	public LocalStructureJiang(String fpid, int lsid, ArrayList<Minutia> minutiae, int minutia_id, double[] distances, int[] neighbors) {
+	public LocalStructureJiang(String fpid, int lsid, ArrayList<Minutia> minutiae, int minutia_id, float[] distances, int[] neighbors) {
 		
 		super(fpid,lsid);
-		fv = new double[3*NN];
+		fv = new float[3*NN];
 		
 		minutia = new Minutia(minutiae.get(minutia_id));
 		
-		double angle = minutia.getcrnT();
+		float angle = minutia.getcrnT();
 		int coordx = minutia.getX();
 		int coordy = minutia.getY();
 		
@@ -104,7 +104,7 @@ public class LocalStructureJiang extends LocalStructure {
 			fv[k] = distances[neighbor];
 			
 			// Radial angle computation
-			fv[k + NN] = Util.dFi(Math.atan2(coordy - minutiae.get(neighbor).getY(), coordx - minutiae.get(neighbor).getX()), angle);
+			fv[k + NN] = Util.dFi((float) Math.atan2(coordy - minutiae.get(neighbor).getY(), coordx - minutiae.get(neighbor).getX()), angle);
 			
 			// Minutia direction computation
 			fv[k + 2*NN] = Util.dFi(angle, minutiae.get(neighbor).getcrnT());
@@ -119,7 +119,7 @@ public class LocalStructureJiang extends LocalStructure {
 	
 	public static LocalStructureJiang [] extractLocalStructures(String fpid,
 			ArrayList<Minutia> minutiae,
-			double[][] distance_matrix,
+			float[][] distance_matrix,
 			int[][] neighborhood,
 			boolean discarding) {
 		
@@ -167,7 +167,7 @@ public class LocalStructureJiang extends LocalStructure {
 		ow.readFields(in);
 		minutia.readFields(in);
 		
-		fv = (double[]) ow.get();
+		fv = (float[]) ow.get();
 	}
 	
 	@Override
@@ -184,9 +184,9 @@ public class LocalStructureJiang extends LocalStructure {
 	
 
 	@Override
-	public double similarity(LocalStructure ls) throws LSException {
+	public float similarity(LocalStructure ls) throws LSException {
 		
-		double sum = 0.0;
+		float sum = 0.0f;
 		
 		if(!(ls instanceof LocalStructureJiang))
 			throw new LSException("The similarity can only be computed for local structures of the same type");
@@ -197,7 +197,7 @@ public class LocalStructureJiang extends LocalStructure {
 		if(Math.abs(minutia.getX()-lsj.minutia.getX()) >= LOCALBBOX[0] ||
 				Math.abs(minutia.getY()-lsj.minutia.getY()) >= LOCALBBOX[1] ||
 				Math.abs(Util.dFi(minutia.getrT(), lsj.minutia.getrT())) >= LOCALBBOX[2])
-			return 0.0;
+			return 0.0f;
 		
 		// Improvement: discard neighborhoods where the minutiae are very far or very close
 		
@@ -220,18 +220,18 @@ public class LocalStructureJiang extends LocalStructure {
 		}
 		
 		if(sum < BL)
-			return 1.0 - (sum / BL);
+			return 1.0f - (sum / BL);
 		else
-			return 0.0;
+			return 0.0f;
 	}
 	
 	
-	public double[] transformMinutia(Minutia ref) {
+	public float[] transformMinutia(Minutia ref) {
 
-		double [] fg = new double[3];
+		float [] fg = new float[3];
 		
 		fg[0] = minutia.getDistance(ref);
-		fg[1] = Util.dFi(Math.atan2(minutia.getY() - ref.getY(), minutia.getX() - ref.getX()), ref.getcrnT());
+		fg[1] = Util.dFi((float) Math.atan2(minutia.getY() - ref.getY(), minutia.getX() - ref.getX()), ref.getcrnT());
 		fg[2] = Util.dFi(minutia.getcrnT(), ref.getcrnT());
 		
 		return fg;

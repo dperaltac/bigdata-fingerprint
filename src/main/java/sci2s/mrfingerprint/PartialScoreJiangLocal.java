@@ -159,7 +159,7 @@ public class PartialScoreJiangLocal implements PartialScore {
 	}
 
 
-	public double aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
+	public float aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
 
 		PartialScoreJiangLocal bestps = new PartialScoreJiangLocal(values);
 
@@ -256,9 +256,9 @@ public class PartialScoreJiangLocal implements PartialScore {
 		}
 	}
 
-	public double computeScore(String input_fpid, Map<?, ?> infomap) {
+	public float computeScore(String input_fpid, Map<?, ?> infomap) {
 		
-		double score = 0.0;
+		float score = 0.0f;
 		int inputsize = ((LocalStructureJiang[]) infomap.get(input_fpid)).length;
 		
 		reduceLmatches();

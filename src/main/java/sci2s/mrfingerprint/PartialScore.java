@@ -10,7 +10,7 @@ public interface PartialScore extends Writable {
 	public PartialScore computePartialScore(LocalStructure ls, LocalStructure[] als);
 
 //	public double aggregate(PartialScoreKey key, Iterable<PartialScore> values, Map<?, ?> infomap);
-	public double aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?, ?> infomap);
+	public float aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?, ?> infomap);
 
 //	public PartialScore partialAggregate(PartialScoreKey key, Iterable<PartialScore> values, Map<?, ?> infomap);
 	public PartialScore partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?, ?> infomap);
@@ -19,7 +19,7 @@ public interface PartialScore extends Writable {
 	public PartialScore aggregateSinglePS(PartialScore ps);
 	
 	// For Spark: get the score from a single PS (when the aggregation is finished)
-	public double computeScore(String input_fpid, Map<?, ?> infomap);
+	public float computeScore(String input_fpid, Map<?, ?> infomap);
 	
 	public void saveInfoFile(LocalStructure[][] inputls, Configuration conf);
 

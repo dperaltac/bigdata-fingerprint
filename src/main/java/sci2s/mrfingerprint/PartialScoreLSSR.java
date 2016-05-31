@@ -23,18 +23,18 @@ public class PartialScoreLSSR implements PartialScore {
 	protected Map<Integer, Minutia> tls;
 	protected TopN<LocalMatch> lmatches;
 	
-	public static final double NRFACTOR = 0.5; 
+	public static final float NRFACTOR = 0.5f; 
 
 	static protected class LocalMatch implements Comparable<LocalMatch>, Writable {
 
 		public int b1;
 		public int b2;
-		public double sl;
+		public float sl;
 
 		public LocalMatch() {
 			b1 = 0;
 			b2 = 0;
-			sl = 0.0;
+			sl = 0.0f;
 		}
 
 		public LocalMatch(LocalMatch o) {
@@ -43,7 +43,7 @@ public class PartialScoreLSSR implements PartialScore {
 			sl = o.sl;
 		}
 
-		public LocalMatch(int b1, int b2, double sl) {
+		public LocalMatch(int b1, int b2, float sl) {
 			this.b1 = b1;
 			this.b2 = b2;
 			this.sl = sl;
@@ -65,7 +65,7 @@ public class PartialScoreLSSR implements PartialScore {
 		public void readFields(DataInput arg0) throws IOException {
 			b1 = arg0.readInt();
 			b2 = arg0.readInt();
-			sl = arg0.readDouble();
+			sl = arg0.readFloat();
 		}
 
 		public void write(DataOutput arg0) throws IOException {
@@ -86,13 +86,13 @@ public class PartialScoreLSSR implements PartialScore {
 	}
 
 	public static final int NREL = 5;
-	public static final double WR = 0.5; //!< Weight parameter in Relaxation computation
-	public static final double MUP1 = 5; //!< Sigmoid parameter 1 in the computation of d_1 relaxation
-	public static final double TAUP1 = -1.6; //!< Sigmoid parameter 2 in the computation of d_1 relaxation
-	public static final double MUP2 = 0.261799387799; //!< Sigmoid parameter 1 in the computation of d_2 relaxation
-	public static final double TAUP2 = -30; //!< Sigmoid parameter 2 in the computation of d_2 relaxation
-	public static final double MUP3 = 0.261799387799; //!< Sigmoid parameter 1 in the computation of d_3 relaxation
-	public static final double TAUP3 = -30; //!< Sigmoid parameter 2 in the computation of d_3 relaxation
+	public static final float WR = 0.5f; //!< Weight parameter in Relaxation computation
+	public static final float MUP1 = 5; //!< Sigmoid parameter 1 in the computation of d_1 relaxation
+	public static final float TAUP1 = -1.6f; //!< Sigmoid parameter 2 in the computation of d_1 relaxation
+	public static final float MUP2 = 0.261799387799f; //!< Sigmoid parameter 1 in the computation of d_2 relaxation
+	public static final float TAUP2 = -30; //!< Sigmoid parameter 2 in the computation of d_2 relaxation
+	public static final float MUP3 = 0.261799387799f; //!< Sigmoid parameter 1 in the computation of d_3 relaxation
+	public static final float TAUP3 = -30; //!< Sigmoid parameter 2 in the computation of d_3 relaxation
 
 	public static final int MAX_LMATCHES = 250;
 
@@ -166,7 +166,7 @@ public class PartialScoreLSSR implements PartialScore {
 
 	public PartialScoreLSSR (LocalStructure ls, LocalStructure[] als) {
 
-		double sl;
+		float sl;
 
 		// If the cylinder is not valid, no partial score is computed
 		if(!((LocalStructureCylinder) ls).isValid()) {
@@ -261,9 +261,9 @@ public class PartialScoreLSSR implements PartialScore {
 		auxaw2.write(out);
 	}
 
-	public static double rho(Minutia t_a, Minutia t_b, Minutia k_a, Minutia k_b) {
+	public static float rho(Minutia t_a, Minutia t_b, Minutia k_a, Minutia k_b) {
 
-		double d1, d2, d3;
+		float d1, d2, d3;
 
 		d1 = Math.abs(t_a.getDistance(k_a.getX(),k_a.getY()) - t_b.getDistance(k_b.getX(),k_b.getY()));
 		d2 = Math.abs(Util.dFiMCC(Util.dFiMCC(t_a.getrT(),k_a.getrT()),Util.dFiMCC(t_b.getrT(),k_b.getrT())));
@@ -272,13 +272,13 @@ public class PartialScoreLSSR implements PartialScore {
 		return Util.psi(d1,MUP1,TAUP1) * Util.psi(d2,MUP2,TAUP2) * Util.psi(d3,MUP3,TAUP3);
 	}
 
-	public static double dR(Minutia m1, Minutia m2)
+	public static float dR(Minutia m1, Minutia m2)
 	{
-		return Util.dFiMCC(m1.getrT(), Math.atan2(m1.getY()-m2.getY(), m2.getX()-m1.getX()));
+		return Util.dFiMCC(m1.getrT(), (float) Math.atan2(m1.getY()-m2.getY(), m2.getX()-m1.getX()));
 	}
 
 
-	public double aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
+	public float aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
 
 		PartialScoreLSSR bestps = new PartialScoreLSSR(values);
 
@@ -434,7 +434,7 @@ public class PartialScoreLSSR implements PartialScore {
 		return this;
 	}
 
-	public double computeScore(Minutia [] inputmin) {
+	public float computeScore(Minutia [] inputmin) {
 
 		// Extract the best nr pairs (LSS consolidation)
 		int nr = (int)Math.floor(Math.min(Math.min(inputmin.length, tls.size()), lmatches.size()/NRFACTOR) * NRFACTOR);
@@ -446,26 +446,26 @@ public class PartialScoreLSSR implements PartialScore {
 		return consolidation(inputmin, bestlm, np);
 	}
 
-	public double computeScore(String input_fpid, Map<?, ?> infomap) {
+	public float computeScore(String input_fpid, Map<?, ?> infomap) {
 		return computeScore((Minutia []) infomap.get(input_fpid));
 	}
 
-	protected double consolidation(Minutia [] inputmin, LocalMatch[] bestlm, int np)
+	protected float consolidation(Minutia [] inputmin, LocalMatch[] bestlm, int np)
 	{
 		int nr = bestlm.length;
 
-		double [] lambdaT = new double[bestlm.length];
-		double [] lambdaT1 = new double[lambdaT.length];
+		float [] lambdaT = new float[bestlm.length];
+		float [] lambdaT1 = new float[lambdaT.length];
 
 		// Concatenate all similarity values
 		for(int i = 0; i < nr; i++)
 			lambdaT[i] = bestlm[i].sl;
 
-		final double LAMBDAWEIGHT = (1.0-WR)/(nr-1.0);
+		final float LAMBDAWEIGHT = (1.0f-WR)/(nr-1.0f);
 
-		double [][] rhotab = new double[nr][nr];
+		float [][] rhotab = new float[nr][nr];
 
-		double sum = 0.0;
+		float sum = 0.0f;
 
 		Arrays.sort(inputmin);
 
@@ -483,13 +483,13 @@ public class PartialScoreLSSR implements PartialScore {
 		// Apply relaxation iterations
 		for (int i=0; i<NREL; i++)
 		{
-			double [] tmp = lambdaT;
+			float [] tmp = lambdaT;
 			lambdaT = lambdaT1;
 			lambdaT1 = tmp;
 
 			for (int j=0; j<nr; j++)
 			{
-				sum = 0.0;
+				sum = 0.0f;
 				for (int k=0; k<nr; k++)
 					sum += rhotab[j][k] * lambdaT1[k];
 
@@ -497,14 +497,14 @@ public class PartialScoreLSSR implements PartialScore {
 			}
 		}
 
-		double [] efficiency = new double[nr];
+		float [] efficiency = new float[nr];
 
 		for (int i=0; i<nr; i++)
 			efficiency[i] = lambdaT[i] / bestlm[i].sl;
 
 		Integer [] besteffidx = Util.sortIndexes(efficiency);
 
-		sum = 0.0;
+		sum = 0.0f;
 
 		for (int i=0; i<np; i++)
 			sum += lambdaT[besteffidx[nr-i-1]];

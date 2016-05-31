@@ -4,7 +4,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.StringTokenizer;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -27,35 +26,37 @@ public class LocalStructureCylinder extends LocalStructure {
 	public static final int R = 70;
 //	public static final double SIGMAS = 9.333333;
 	public static final int OMEGA = 50;
-	public static final double MINME = 0.6; //!< Minimum number of matching elements in two matchable cylinders
-	public static final double RELSHIFT = 0.5*(NS+1);
-	public static final double MINVC = 0.75;
+	public static final float MINME = 0.6f; //!< Minimum number of matching elements in two matchable cylinders
+	public static final float RELSHIFT = 0.5f*(NS+1);
+	public static final float MINVC = 0.75f;
 	public static final int NEIGHBORHOODRADIUS = 28;
 	public static final int RNEIGHBORHOODRADIUS = R+NEIGHBORHOODRADIUS;
 	public static final int MINM = 4;
 	public static final int NUMCELLS = ND*NS*NS;
 	public static final int MAXNVCELLS = (int) Math.floor((1.0-MINVC*(2-4/Math.PI)) * NUMCELLS);
-	public static final double ISIGMAD = 1.43239448783; //1.0/SIGMAD;
-	public static final double DELTAD = 1.047197551; //(2.0*PI)/Nd;
-	public static final double GAUSSIANDEN = 0.042743816; //1.0 / (SIGMAS * sqrt(2*PI));
-	public static final double ISIGMASQ2 = 0.005739796; //1.0 / (2.0*SIGMAS*SIGMAS);
-	public static final double MUPSI = 0.01; //!< Sigmoid parameter 1 for function Psi
-	public static final double TAUPSI = 400; //!< Sigmoid parameter 2 for function Psi
-	public static final double DELTAS = (2.0*R)/NS;
-	public static final double DELTAZETA = 1.57079633;
+	public static final float ISIGMAD = 1.43239448783f; //1.0/SIGMAD;
+	public static final float DELTAD = 1.047197551f; //(2.0*PI)/Nd;
+	public static final float GAUSSIANDEN = 0.042743816f; //1.0 / (SIGMAS * sqrt(2*PI));
+	public static final float ISIGMASQ2 = 0.005739796f; //1.0 / (2.0*SIGMAS*SIGMAS);
+	public static final float MUPSI = 0.01f; //!< Sigmoid parameter 1 for function Psi
+	public static final float TAUPSI = 400f; //!< Sigmoid parameter 2 for function Psi
+	public static final float DELTAS = (2.0f*R)/NS;
+	public static final float DELTAZETA = 1.57079633f;
 	public static final int MINCELLS = (int)Math.floor(MINME*NUMCELLS);
 	
-	protected double[] cm_vector;
+	protected float[] cm_vector;
 	
 	protected Minutia minutia;
 	protected boolean valid;
+	protected float norm;
 	
 	public LocalStructureCylinder() {
 		super();
 
-		cm_vector = new double[NUMCELLS];
+		cm_vector = new float[NUMCELLS];
 		minutia = new Minutia();
 		valid = false;
+		norm = 0;
 	}
 	
 	public LocalStructureCylinder(LocalStructureCylinder lsc) {
@@ -64,53 +65,60 @@ public class LocalStructureCylinder extends LocalStructure {
 		cm_vector = Arrays.copyOf(lsc.cm_vector, lsc.cm_vector.length);
 		minutia = new Minutia(lsc.minutia);
 		valid = lsc.valid;
+		norm = lsc.norm;
 	}
 	
-	public LocalStructureCylinder(String value) throws LSException {
-
-		StringTokenizer st = new StringTokenizer(value, ";");
-		
-		// The first two elements are the FPID and LSID
-		fpid = st.nextToken();
-		lsid = Integer.parseInt(st.nextToken());
-		
-		// Then goes the minutia
-		minutia = new Minutia(st.nextToken());
-		
-		// Then goes the validity
-		valid = Boolean.parseBoolean(st.nextToken());
-		
-		// Now only the feature vector remains
-		StringTokenizer stfv = new StringTokenizer(st.nextToken(), " ");
-		
-		// The line must have NUMCELLS elements
-		if(stfv.countTokens() != NUMCELLS) {
-			throw new LSException("LocalStructureCylinder(String): error when reading \"" + stfv.toString() + "\": it has " + stfv.countTokens() + " instead of NUMCELLS = " + NUMCELLS);
-		}
-		
-		cm_vector = new double[stfv.countTokens()];
-		
-		int i = 0;
-		
-		while(stfv.hasMoreTokens()) {
-			cm_vector[i] = Double.parseDouble(stfv.nextToken());
-			i++;
-		}
-	}
+//	public LocalStructureCylinder(String value) throws LSException {
+//
+//		StringTokenizer st = new StringTokenizer(value, ";");
+//		
+//		// The first two elements are the FPID and LSID
+//		fpid = st.nextToken();
+//		lsid = Integer.parseInt(st.nextToken());
+//		
+//		// Then goes the minutia
+//		minutia = new Minutia(st.nextToken());
+//	
+//	// Then goes the validity
+//	valid = Boolean.parseBoolean(st.nextToken());
+//	
+//	// Then goes the norm
+//	norm = Float.parseFloat(st.nextToken());
+//		
+//		// Now only the feature vector remains
+//		StringTokenizer stfv = new StringTokenizer(st.nextToken(), " ");
+//		
+//		// The line must have NUMCELLS elements
+//		if(stfv.countTokens() != NUMCELLS) {
+//			throw new LSException("LocalStructureCylinder(String): error when reading \"" + stfv.toString() + "\": it has " + stfv.countTokens() + " instead of NUMCELLS = " + NUMCELLS);
+//		}
+//		
+//		cm_vector = new float[stfv.countTokens()];
+//		
+//		int i = 0;
+//		
+//		while(stfv.hasMoreTokens()) {
+//			cm_vector[i] = Float.parseFloat(stfv.nextToken());
+//			i++;
+//		}
+//		
+//		computeNorm();
+//	}
 	
 	public LocalStructureCylinder(String fpid, int lsid) {
 
 		super(fpid,lsid);
 
-		cm_vector = new double[NUMCELLS];
+		cm_vector = new float[NUMCELLS];
 		minutia = new Minutia();
 		valid = false;
+		norm = 0;
 	}
 	
 	public LocalStructureCylinder(String fpid, int lsid, ArrayList<Minutia> minutiae, int minutia_id) {
 		
 		super(fpid,lsid);
-		cm_vector = new double[NUMCELLS];
+		cm_vector = new float[NUMCELLS];
 		valid = false;
 		
 		minutia = new Minutia(minutiae.get(minutia_id));
@@ -122,7 +130,7 @@ public class LocalStructureCylinder extends LocalStructure {
 		for (int i=1, pos = 0; i<=NS; i++)
 			for (int j=1; j<=NS; j++)
 			{
-				double [] abscoord = pij(i,j);
+				float [] abscoord = pij(i,j);
 				
 				if (xiM(abscoord[0],abscoord[1],convex))
 				{
@@ -132,7 +140,7 @@ public class LocalStructureCylinder extends LocalStructure {
 				else
 				{
 					for (int k=1; k<=ND; k++, pos++)
-						cm_vector[pos] = -1.0;
+						cm_vector[pos] = -1;
 
 					count += ND;
 				}
@@ -153,34 +161,43 @@ public class LocalStructureCylinder extends LocalStructure {
 
 			valid = (count >= MINM);
 		}
+		
+		computeNorm();
 	}
 	
-	public double cm(double i, double j, int k, ArrayList<Minutia> minutiae, Point[] convex)
+	protected void computeNorm() {
+		
+		double sum = 0;
+		
+		for (int i=0; i<NUMCELLS; i++)
+			if(cm_vector[i] >= 0)
+				sum += Util.square(cm_vector[i]);
+		
+		norm = (float) Math.sqrt(sum);
+	}
+	
+	public float cm(float i, float j, int k, ArrayList<Minutia> minutiae, Point[] convex)
 	{
-		double sum = 0.0;
-		double angle = minutia.getrT();
-		double dfikk = dFik(k);
+		float sum = 0.0f;
+		float angle = minutia.getrT();
+		float dfikk = dFik(k);
 		
 		for (Minutia min : minutiae)
 			if (minutia.index != min.index && min.getSDistance(i,j) <= NEIGHBORHOODRADIUS*NEIGHBORHOODRADIUS)
-			{
-				double cs = contributionS(min, i, j);
-				double cd = contributionD(min, angle, dfikk); 
-				sum += cs * cd;
-			}
+				sum += contributionS(min, i, j) * contributionD(min, angle, dfikk);
 			
 		return Util.psi(sum, MUPSI, TAUPSI);
 	}
 	
 
-	public double [] pij(int i, int j)
+	public float [] pij(int i, int j)
 	{
-		double relative_i = i - RELSHIFT;
-		double relative_j = j - RELSHIFT;
-		double cosT = Math.cos(minutia.getrT());
-		double sinT = Math.sin(minutia.getrT());
+		float relative_i = i - RELSHIFT;
+		float relative_j = j - RELSHIFT;
+		float cosT = (float) Math.cos(minutia.getrT());
+		float sinT = (float) Math.sin(minutia.getrT());
 		
-		double [] res = new double[2];
+		float [] res = new float[2];
 
 		res[0] = DELTAS * (cosT*relative_i + sinT*relative_j) + minutia.getX();
 		res[1] = DELTAS * (cosT*relative_j - sinT*relative_i) + minutia.getY();
@@ -188,7 +205,7 @@ public class LocalStructureCylinder extends LocalStructure {
 		return res;
 	}
 
-	public boolean xiM(double i, double j, Point [] convex)
+	public boolean xiM(float i, float j, Point [] convex)
 	{
 	    if (minutia.getSDistance(i,j) > R*R) {
 	        return false;
@@ -240,24 +257,24 @@ public class LocalStructureCylinder extends LocalStructure {
 		return true;
 	}
 
-    static double dFik(int k)
+    static float dFik(int k)
     {
-        return (k - 0.5)*DELTAD - Math.PI;
+        return (float) ((k - 0.5f)*DELTAD - Math.PI);
     }
 
 
-    static double contributionS(Minutia min, double p_i, double p_j)
+    static float contributionS(Minutia min, float p_i, float p_j)
     {
-        return GAUSSIANDEN / Math.exp(min.getSDistance(p_i,p_j)*ISIGMASQ2);
+        return (float) (GAUSSIANDEN / Math.exp(min.getSDistance(p_i,p_j)*ISIGMASQ2));
     }
 
 
-    static double contributionD(Minutia min, double angle, double k_angle)
+    static float contributionD(Minutia min, float angle, float k_angle)
     {
-    	double alpha = Util.dFiMCC(Util.dFiMCC(angle, min.getrT()), k_angle) * ISIGMAD;
+    	float alpha = Util.dFiMCC(Util.dFiMCC(angle, min.getrT()), k_angle) * ISIGMAD;
 
     	/*Area of the curve computation*/
-    	return Util.doLeft(alpha + 0.5) - Util.doLeft(alpha - 0.5);
+    	return Util.doLeft(alpha + 0.5f) - Util.doLeft(alpha - 0.5f);
     }
 	
 	
@@ -302,6 +319,7 @@ public class LocalStructureCylinder extends LocalStructure {
 		ow.write(out);
 		minutia.write(out);
 		out.writeBoolean(valid);
+		out.writeFloat(norm);
 	}
 	
 	@Override
@@ -312,18 +330,20 @@ public class LocalStructureCylinder extends LocalStructure {
 		ArrayPrimitiveWritable ow = new ArrayPrimitiveWritable(cm_vector);
 		
 		ow.readFields(in);
+		cm_vector = (float[]) ow.get();
+		
 		minutia.readFields(in);
 		valid = in.readBoolean();
+		norm = in.readFloat();
 		
-		cm_vector = (double[]) ow.get();
 	}
 	
 	@Override
 	public String toString() {
 		
-		String result = super.toString() + ";" + minutia.toString() + ";" + valid + ";";
+		String result = super.toString() + ";" + minutia.toString() + ";" + valid + ";" + norm + ";";
 		
-		for(double i : cm_vector)
+		for(float i : cm_vector)
 			result = result + " " + i;
 		
 		return result;
@@ -332,14 +352,14 @@ public class LocalStructureCylinder extends LocalStructure {
 	
 
 	@Override
-	public double similarity(LocalStructure ls)
+	public float similarity(LocalStructure ls) throws LSException
 	{
 		int count = 0;
-		double norma_b = 0, normb_a = 0, norm_diff = 0;
-		double ca_b, cb_a;
+		float norm_diff = 0;
+		float ca_b, cb_a;
 		
-//		if(!(ls instanceof LocalStructureCylinder))
-//			throw new LSException("The similarity can only be computed for local structures of the same type");
+		if(!(ls instanceof LocalStructureCylinder))
+			throw new LSException("The similarity can only be computed for local structures of the same type");
 		
 		LocalStructureCylinder lsc = (LocalStructureCylinder) ls;
 
@@ -354,19 +374,13 @@ public class LocalStructureCylinder extends LocalStructure {
 			if (ca_b>=0 && cb_a>=0)
 			{
 				count++;
-
-				norma_b += ca_b*ca_b;
-				normb_a += cb_a*cb_a;
-				norm_diff += ca_b*cb_a;
+				norm_diff += Util.square(ca_b-cb_a);
 			}
 		}
 			
 		//Check if two cylinders are matchable
 		if(count >= MINCELLS)
-		{
-			norm_diff = Math.sqrt(norma_b + normb_a - 2.0*norm_diff);
-			return 1.0 - (norm_diff/(Math.sqrt(norma_b)+Math.sqrt(normb_a)));
-		}
+			return (float) (1.0 - (Math.sqrt(norm_diff)/(norm+lsc.norm)));
 		else
 			return 0;
 	}

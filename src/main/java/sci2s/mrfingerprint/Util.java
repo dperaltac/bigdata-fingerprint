@@ -24,8 +24,8 @@ import org.apache.hadoop.mapreduce.Reducer.Context;
 
 public class Util {
 
-	public static final double RADTOREG = 57.324840764331210191082802547771; // Radians to degrees
-	public static final double REGTORAD = 0.017453293; // Radians to degrees
+	public static final float RADTOREG = 57.324840764331210191082802547771f; // Radians to degrees
+	public static final float REGTORAD = 0.017453293f; // Radians to degrees
 
 	public final static String MAPFILEDEFAULTNAME = "InputLocalStructures.MapFile";
 	public final static String MAPFILENAMEPROPERTY = "MapFileName";
@@ -34,29 +34,37 @@ public class Util {
 	
 	private Util() {};
 	
-	public static double dFi(double a, double b) {
-		double diff = a-b;
+	public static float dFi(float a, float b) {
+		float diff = a-b;
 		
 		if(diff > Math.PI)
-			return 2*Math.PI - diff;
+			return (float) (2*Math.PI - diff);
 		else if(diff <= -Math.PI)
-			return 2*Math.PI + diff;
+			return (float) (2*Math.PI + diff);
 		else
 			return diff;
 	}
 	
-	public static double dFiMCC(double a, double b) {
-		double diff = a-b;
+	public static float dFiMCC(float a, float b) {
+		float diff = a-b;
 		
 	    if (diff >= -Math.PI && diff < Math.PI)
 	        return diff;
 	    else if (diff < -Math.PI)
-	        return 2*Math.PI + diff;
+	        return (float) (2*Math.PI + diff);
 	    else
-	        return -2*Math.PI + diff;
+	        return (float) (-2*Math.PI + diff);
+	}
+	
+	public static byte dFi256(byte a, byte b) {
+		return (byte) (a-b);
 	}
 	
 	public static double square(double a) {
+		return a*a;
+	}
+	
+	public static float square(float a) {
 		return a*a;
 	}
 	
@@ -104,20 +112,20 @@ public class Util {
 		return result.toArray(new String[result.size()]);
 	}
 	
-	public static double doLeft(double z)
+	public static Float doLeft(Float z)
 	{
-		return (1.0+Erf.erf(z*0.707106781))/2;
+		return (float) ((1.0+Erf.erf(z*0.707106781))/2);
 	}
 	
-	public static double DistanceFromLine(double cx, double cy, double ax, double ay ,
-	                                          double bx, double by)
+	public static Float DistanceFromLine(float cx, float cy, float ax, float ay ,
+	                                          float bx, float by)
 	{
-		double diffbax = bx-ax;
-		double diffbay = by-ay;
-		double diffcax = cx-ax;
-		double diffcay = cy-ay;
-		double diffcbx = cx-bx;
-		double diffcby = cy-by;
+		float diffbax = bx-ax;
+		float diffbay = by-ay;
+		float diffcax = cx-ax;
+		float diffcay = cy-ay;
+		float diffcbx = cx-bx;
+		float diffcby = cy-by;
 		double r_numerator = diffcax*diffbax + diffcay*diffbay;
 		double r_denomenator = square(diffbax) + square(diffbay);
 
@@ -127,14 +135,14 @@ public class Util {
 
 		if ( (r_numerator >= 0) && (r_numerator <= r_denomenator) )
 		{
-			return Math.abs(diffcax*diffbay - diffcay*diffbax) / Math.sqrt(r_denomenator);
+			return (float) (Math.abs(diffcax*diffbay - diffcay*diffbax) / Math.sqrt(r_denomenator));
 		}
 		else
 		{
 			double dist1 = square(diffcax) + square(diffcay);
 			double dist2 = square(diffcbx) + square(diffcby);
 
-			return Math.sqrt(Math.min(dist1, dist2));
+			return (float) Math.sqrt(Math.min(dist1, dist2));
 		}
 	}
 
@@ -187,7 +195,7 @@ public class Util {
 	 * @param array Array whose order is calculated
 	 * @return Array of indices for the ordered vector. The first index is the minimum value, and so forth.
 	 */
-	public static Integer [] sortIndexes(final double [] array) {
+	public static Integer [] sortIndexes(final float [] array) {
 		
 		Integer [] idx = new Integer[array.length];
 		
@@ -196,16 +204,16 @@ public class Util {
 
 		Arrays.sort(idx, new Comparator<Integer>() {
 		    public int compare(final Integer o1, final Integer o2) {
-		        return Double.compare(array[o1], array[o2]);
+		        return Float.compare(array[o1], array[o2]);
 		    }
 		});
 		
 		return idx;
 	}
 	
-    public static double psi(double v, double par1, double par2)
+    public static float psi(float v, float par1, float par2)
     {
-    	return 1.0 / (1.0 + Math.exp((par2*(par1-v))));
+    	return (float) (1.0 / (1.0 + Math.exp((par2*(par1-v)))));
     }
     
 
@@ -294,14 +302,14 @@ public class Util {
 	}
 	
 	
-	public static int minPosition(double [] v) {
+	public static int minPosition(float[] bestsimilarities) {
 		int pos = 0;
-		double min = Double.MAX_VALUE;
+		Float min = Float.MAX_VALUE;
 		
-		for(int i = 0; i < v.length; ++i) {
-			if(v[i] < min) {
+		for(int i = 0; i < bestsimilarities.length; ++i) {
+			if(bestsimilarities[i] < min) {
 				pos = i;
-				min = v[i];
+				min = bestsimilarities[i];
 			}
 		}
 		
@@ -309,9 +317,9 @@ public class Util {
 	}
 	
 	
-	public static int maxPosition(double [] v) {
+	public static int maxPosition(float [] v) {
 		int pos = 0;
-		double max = Double.MIN_VALUE;
+		Float max = Float.MIN_VALUE;
 		
 		for(int i = 0; i < v.length; ++i) {
 			if(v[i] > max) {
