@@ -42,6 +42,7 @@ public class LocalStructureCylinder extends LocalStructure {
 	public static final float TAUPSI = 400f; //!< Sigmoid parameter 2 for function Psi
 	public static final float DELTAS = (2.0f*R)/NS;
 	public static final float DELTAZETA = 1.57079633f;
+	public static final byte DELTAZETABYTE = 64;
 	public static final int MINCELLS = (int)Math.floor(MINME*NUMCELLS);
 	
 	protected float[] cm_vector;
@@ -179,8 +180,8 @@ public class LocalStructureCylinder extends LocalStructure {
 	public float cm(float i, float j, int k, ArrayList<Minutia> minutiae, Point[] convex)
 	{
 		float sum = 0.0f;
-		float angle = minutia.getrT();
-		float dfikk = dFik(k);
+		byte angle = minutia.getbT();
+		byte dfikk = dFikb(k);
 		
 		for (Minutia min : minutiae)
 			if (minutia.index != min.index && min.getSDistance(i,j) <= NEIGHBORHOODRADIUS*NEIGHBORHOODRADIUS)
@@ -262,6 +263,11 @@ public class LocalStructureCylinder extends LocalStructure {
         return (float) ((k - 0.5f)*DELTAD - Math.PI);
     }
 
+    static byte dFikb(int k)
+    {
+        return (byte) ((k - 0.5)*256/ND - 128);
+    }
+
 
     static float contributionS(Minutia min, float p_i, float p_j)
     {
@@ -272,6 +278,15 @@ public class LocalStructureCylinder extends LocalStructure {
     static float contributionD(Minutia min, float angle, float k_angle)
     {
     	float alpha = Util.dFiMCC(Util.dFiMCC(angle, min.getrT()), k_angle) * ISIGMAD;
+
+    	/*Area of the curve computation*/
+    	return Util.doLeft(alpha + 0.5f) - Util.doLeft(alpha - 0.5f);
+    }
+
+
+    static float contributionD(Minutia min, byte angle, byte k_angle)
+    {
+    	float alpha = (float) (Util.dFi256(Util.dFi256(angle, min.getbT()), k_angle) * ISIGMAD * Math.PI/128);
 
     	/*Area of the curve computation*/
     	return Util.doLeft(alpha + 0.5f) - Util.doLeft(alpha - 0.5f);
@@ -363,7 +378,7 @@ public class LocalStructureCylinder extends LocalStructure {
 		
 		LocalStructureCylinder lsc = (LocalStructureCylinder) ls;
 
-		if (Math.abs(Util.dFiMCC(minutia.getrT(),lsc.minutia.getrT())) > DELTAZETA)
+		if (Math.abs(Util.dFi256(minutia.getbT(),lsc.minutia.getbT())) > DELTAZETABYTE)
 			return 0;
 		
 		for (int i=0; i<NUMCELLS; i++)

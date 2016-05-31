@@ -142,7 +142,7 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 		int x = 0;
 		int y = 0;
 		float theta = 0;
-		int quality = 0;
+		byte quality = 0;
 		
 		BufferedReader br;
 		
@@ -169,7 +169,7 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 				x = Integer.parseInt(st.nextToken());
 				y = Integer.parseInt(st.nextToken());
 				theta = Float.parseFloat(st.nextToken())*2;
-				quality = Integer.parseInt(st.nextToken());
+				quality = Byte.parseByte(st.nextToken());
 				
 				minutiae.add(new Minutia(index, x, y, theta, quality));
 				
@@ -202,7 +202,7 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 		int x = 0;
 		int y = 0;
 		float theta = 0;
-		int quality = 0;
+		byte quality = 0;
 		ArrayList<Minutia> minutiae = new ArrayList<Minutia>();
 		
 		// The fingerprint ID is the first token before the colon
@@ -232,7 +232,7 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 				x = Integer.parseInt(mintk.nextToken());
 				y = Integer.parseInt(mintk.nextToken());
 				theta = Float.parseFloat(mintk.nextToken())*2;
-				quality = Integer.parseInt(mintk.nextToken());
+				quality = Byte.parseByte(mintk.nextToken());
 				
 				minutiae.add(new Minutia(index, x, y, theta, quality));
 				
