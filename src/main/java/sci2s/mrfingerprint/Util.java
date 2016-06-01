@@ -218,8 +218,7 @@ public class Util {
     
 
 	public static LocalStructure [][] readDistributedCacheFingerprints(URI[] input_files,
-			Class<? extends LocalStructure> MatcherClass,
-			boolean discarding) throws IOException {
+			Class<? extends LocalStructure> MatcherClass) throws IOException {
 	    
 	    LocalStructure [][] inputls = null;
 
@@ -227,7 +226,7 @@ public class Util {
 	    // and store so that all maps and reduces can access.
 	    for(int i = 0; i < input_files.length; i++){
 //	    	inputls.addAll(LocalStructure.extractLocalStructuresFromFile(MatcherClass, FilenameUtils.getName(input_file.getPath())));
-	    	LocalStructure [][] ials = LocalStructure.extractLocalStructuresFromFile(MatcherClass, input_files[i].getPath(), discarding);
+	    	LocalStructure [][] ials = LocalStructure.extractLocalStructuresFromFile(MatcherClass, input_files[i].getPath());
 	    	inputls = (LocalStructure[][]) ArrayUtils.addAll(inputls, ials);
 	    }
 	    
@@ -252,7 +251,7 @@ public class Util {
 
 			for(String line : lines) {
 				if(LocalStructure.decodeFpid(line).equals(fpid))
-					return LocalStructure.extractLocalStructures(MatcherClass, line, discarding);
+					return LocalStructure.extractLocalStructures(MatcherClass, line);
 			}
 	    }
 	    
@@ -348,5 +347,31 @@ public class Util {
 		List<LocalStructureJiang> list = new ArrayList<LocalStructureJiang>(Arrays.asList(v));
 		list.removeAll(Collections.singleton(null));
 		return list.toArray(new LocalStructureJiang[list.size()]);
+	}
+
+//	public static LocalStructure[][] removeNonValidLS(final LocalStructure[][] v) {
+//		List<LocalStructure []> list = new ArrayList<LocalStructure []>(v.length);
+//		
+//		for(LocalStructure[] als : v) {
+//			List<LocalStructure> listls = new ArrayList<LocalStructure>();
+//			for(LocalStructure ls : als)
+//				if(ls.isValid())
+//					listls.add(ls);
+//			
+//			list.add(listls.toArray(new LocalStructure[listls.size()]));
+//		}
+//					
+//		return list.toArray(new LocalStructure[list.size()][]);
+//	}
+
+	public static LocalStructure[] removeNonValidLS(final LocalStructure[] v) {
+		List<LocalStructure> list = new ArrayList<LocalStructure>(v.length);
+
+		for(LocalStructure ls : v) {
+			if(ls.isValid())
+				list.add(ls);
+		}
+
+		return list.toArray(new LocalStructure[list.size()]);
 	}
 }

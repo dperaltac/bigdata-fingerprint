@@ -21,7 +21,6 @@ public class LSBuilder extends Configured implements Tool{
 		System.err.println("Usage: hadoop jar " + LSBuilder.class.getName() + " [Options] <xytl file> <output dir>\n");
 		System.err.println("Options:");
 		System.err.println("\t-D matcher={LocalStructureJiang|LocalStructureCylinder}\tNo default");
-		System.err.println("\t-D discarding\tOptional. Default: no discarding applied.");
 	}
 
 	public int run(String[] arg0) throws Exception {

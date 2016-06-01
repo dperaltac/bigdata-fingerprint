@@ -249,27 +249,26 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 		return minutiae;
 	}
 
-	public static <T extends LocalStructure> T [] extractLocalStructures(Class<T> lsclass, String encoded, boolean discarding) {
+	public static <T extends LocalStructure> T [] extractLocalStructures(Class<T> lsclass, String encoded) {
 		String fpid = decodeFpid(encoded);
 		ArrayList<Minutia> minutiae = decodeTextMinutiae(encoded);
 		
-		return extractLocalStructures(lsclass, fpid, minutiae, discarding);
+		return extractLocalStructures(lsclass, fpid, minutiae);
 	}
 	// TODO implement the automatic input from xyt files
-	public static <T extends LocalStructure> LocalStructure [][] extractLocalStructuresFromFile(Class<T> lsclass, String input_file, boolean discarding) {
+	public static <T extends LocalStructure> LocalStructure [][] extractLocalStructuresFromFile(Class<T> lsclass, String input_file) {
 		
 		String[] lines = Util.readFileByLines(input_file);
 		LocalStructure [][] result = new LocalStructure[lines.length][];
 		
-		for(int i = 0; i < lines.length; i++) {
-			result[i] = extractLocalStructures(lsclass, lines[i], discarding);
-		}
+		for(int i = 0; i < lines.length; i++)
+			result[i] = extractLocalStructures(lsclass, lines[i]);
 
 		return result;
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <T extends LocalStructure> T [] extractLocalStructures(Class<T> lsclass, String fpid, ArrayList<Minutia> minutiae, boolean discarding) {
+	public static <T extends LocalStructure> T [] extractLocalStructures(Class<T> lsclass, String fpid, ArrayList<Minutia> minutiae) {
 
 		
 		if(lsclass == LocalStructureJiang.class) {
@@ -277,11 +276,11 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 			float[][] distance_matrix = computeDistance(minutiae);
 			int[][] neighborhood = computeNeighborhood(distance_matrix);
 
-			return (T[]) LocalStructureJiang.extractLocalStructures(fpid, minutiae, distance_matrix, neighborhood, discarding);
+			return (T[]) LocalStructureJiang.extractLocalStructures(fpid, minutiae, distance_matrix, neighborhood);
 		}
 
 		else if(lsclass == LocalStructureCylinder.class)
-			return (T[]) LocalStructureCylinder.extractLocalStructures(fpid, minutiae, discarding);
+			return (T[]) LocalStructureCylinder.extractLocalStructures(fpid, minutiae);
 			
 		else
 			return null;
@@ -372,6 +371,8 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 
 		for(LocalStructure [] ails : inputls) {
 			fpid.set(ails[0].getFpid());
+			
+			ails = Util.removeNonValidLS(ails);
 
 		    try {
 		    	aw = ails[0].newArrayWritable(ails);
@@ -416,5 +417,6 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 	
 	
 	abstract public float similarity(LocalStructure ls) throws LSException;
+	abstract public boolean isValid();
 
 }

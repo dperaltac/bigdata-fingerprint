@@ -122,7 +122,6 @@ object SparkMatcherLSS {
 			// Read template database
 			val templateLS = sc.sequenceFile[String, LocalStructureCylinder](templateFile) //.partitionBy(new HashPartitioner(numPartitions))
           .mapValues(new LocalStructureCylinder(_))
-          .filter({case (id, ls) => ls.isValid()})
 
 			// FOR DEBUGGING
       if(DEBUG) {

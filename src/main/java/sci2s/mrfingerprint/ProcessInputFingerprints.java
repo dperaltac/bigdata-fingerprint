@@ -24,7 +24,6 @@ public class ProcessInputFingerprints extends Configured implements Tool{
 		System.err.println("\t-D PartialScore={PartialScoreJiang|PartialScoreLSS|PartialScoreLSSR}\tNo default");
 		System.err.println("\t-D MapFileName=<file> \tDefault: " + Util.MAPFILEDEFAULTNAME);
 		System.err.println("\t-D InfoFileName=<file>\tDefault: " + Util.INFOFILEDEFAULTNAME);
-		System.err.println("\t-D discarding\tOptional. Default: no discarding applied.");
 	}
 
 	public int run(String[] arg0) throws Exception {
@@ -44,45 +43,12 @@ public class ProcessInputFingerprints extends Configured implements Tool{
 	    	System.exit(-1);
 	    }
 	    
-	    /*
-	     * Specify the jar file that contains your driver, mapper, and reducer.
-	     * Hadoop will transfer this jar file to nodes in your cluster running 
-	     * mapper and reducer tasks.
-	     */
-//	    job.setJarByClass(ProcessInputFingerprints.class);
-	    
 	    
 	    /*
 	     * Process the input fingerprints
 	     */
 	    processInputFingerprints(arg0[0], job);
-	    
-	    /*
-	     * Specify an easily-decipherable name for the job.
-	     * This job name will appear in reports and logs.
-	     */
-//	    job.setJobName("ProcessInputFingerprints");
 
-//	    FileInputFormat.addInputPath(job, new Path(arg0[0]));
-//	    FileOutputFormat.setOutputPath(job, new Path(arg0[1]));
-//	    
-//	    job.setInputFormatClass(KeyValueTextInputFormat.class);
-//	    
-//	    job.setMapperClass(MatchingMapper.class);
-//	    job.setCombinerClass(MatchingCombiner.class);
-//	    job.setReducerClass(MatchingReducer.class);
-//	
-//		job.setMapOutputKeyClass(PartialScoreKey.class);
-//		job.setMapOutputValueClass(GenericPSWrapper.class);
-//
-//	    job.setOutputKeyClass(DoubleWritable.class);
-//	    job.setOutputValueClass(Text.class);
-	    
-	    /*
-	     * Start the MapReduce job and wait for it to finish.
-	     * If it finishes successfully, return 0. If not, return 1.
-	     */
-//	    return (job.waitForCompletion(true) ? 0 : 1);
 	    return 0;
 	}
 
@@ -96,9 +62,7 @@ public class ProcessInputFingerprints extends Configured implements Tool{
 	    @SuppressWarnings("unchecked")
 		Class<? extends LocalStructure> MatcherClass = (Class<? extends LocalStructure>) Util.getClassFromProperty(getConf(), "matcher");
 
-	    boolean discarding = getConf().getBoolean("discarding", false);
-
-		LocalStructure [][] inputls = LocalStructure.extractLocalStructuresFromFile(MatcherClass, file, discarding);
+		LocalStructure [][] inputls = LocalStructure.extractLocalStructuresFromFile(MatcherClass, file);
 		
 		if(inputls.length == 0) {
 			System.err.println("processInputFingerprints: no input local structures could be read");

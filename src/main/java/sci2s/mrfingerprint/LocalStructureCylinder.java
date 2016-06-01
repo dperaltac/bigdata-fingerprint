@@ -48,7 +48,6 @@ public class LocalStructureCylinder extends LocalStructure {
 	protected float[] cm_vector;
 	
 	protected Minutia minutia;
-	protected boolean valid;
 	protected float norm;
 	
 	public LocalStructureCylinder() {
@@ -56,7 +55,6 @@ public class LocalStructureCylinder extends LocalStructure {
 
 		cm_vector = new float[NUMCELLS];
 		minutia = new Minutia();
-		valid = false;
 		norm = 0;
 	}
 	
@@ -65,7 +63,6 @@ public class LocalStructureCylinder extends LocalStructure {
 
 		cm_vector = Arrays.copyOf(lsc.cm_vector, lsc.cm_vector.length);
 		minutia = new Minutia(lsc.minutia);
-		valid = lsc.valid;
 		norm = lsc.norm;
 	}
 	
@@ -112,7 +109,6 @@ public class LocalStructureCylinder extends LocalStructure {
 
 		cm_vector = new float[NUMCELLS];
 		minutia = new Minutia();
-		valid = false;
 		norm = 0;
 	}
 	
@@ -120,7 +116,6 @@ public class LocalStructureCylinder extends LocalStructure {
 		
 		super(fpid,lsid);
 		cm_vector = new float[NUMCELLS];
-		valid = false;
 		
 		minutia = new Minutia(minutiae.get(minutia_id));
 		
@@ -149,21 +144,22 @@ public class LocalStructureCylinder extends LocalStructure {
 		
 		if (count >= MAXNVCELLS)
 		{
-			valid = false;
+			norm = -1;
 		}
 		else
 		{
 			count = 0;
-			float coordx = minutia.getX();
-			float coordy = minutia.getY();
+			int coordx = minutia.getX();
+			int coordy = minutia.getY();
 			for (int jj=0; count < MINM && (count+minutiae.size()-jj) >= MINM && jj<minutiae.size(); jj++)
 				if (minutiae.get(jj).getSDistance(coordx, coordy) <= RNEIGHBORHOODRADIUS*RNEIGHBORHOODRADIUS)
 					count++;
 
-			valid = (count >= MINM);
+			if(count >= MINM)
+				computeNorm();
+			else
+				norm = -1;
 		}
-		
-		computeNorm();
 	}
 	
 	protected void computeNorm() {
@@ -171,7 +167,7 @@ public class LocalStructureCylinder extends LocalStructure {
 		double sum = 0;
 		
 		for (int i=0; i<NUMCELLS; i++)
-			if(cm_vector[i] >= 0)
+			if(cm_vector[i] > 0)
 				sum += Util.square(cm_vector[i]);
 		
 		norm = (float) Math.sqrt(sum);
@@ -303,21 +299,20 @@ public class LocalStructureCylinder extends LocalStructure {
 	}
 
 
-	public static <T extends LocalStructure> T [] extractLocalStructures(Class<T> lsclass, String encoded, boolean discarding) {
+	public static <T extends LocalStructure> T [] extractLocalStructures(Class<T> lsclass, String encoded) {
 		String fpid = decodeFpid(encoded);
 		ArrayList<Minutia> minutiae = decodeTextMinutiae(encoded);
 		
-		return extractLocalStructures(lsclass, fpid, minutiae, discarding);
+		return extractLocalStructures(lsclass, fpid, minutiae);
 	}
 	
 	
-	public static LocalStructureCylinder [] extractLocalStructures(String fpid, ArrayList<Minutia> minutiae, boolean discarding) {
+	public static LocalStructureCylinder [] extractLocalStructures(String fpid, ArrayList<Minutia> minutiae) {
 		
 		LocalStructureCylinder [] ls = new LocalStructureCylinder[minutiae.size()];
 		
-		for(int i = 0; i < minutiae.size(); i++) {
+		for(int i = 0; i < minutiae.size(); i++)
 			ls[i] = new LocalStructureCylinder(fpid, i, minutiae, i);
-		}
 		
 		return ls;
 	}
@@ -333,7 +328,6 @@ public class LocalStructureCylinder extends LocalStructure {
 		
 		ow.write(out);
 		minutia.write(out);
-		out.writeBoolean(valid);
 		out.writeFloat(norm);
 	}
 	
@@ -348,7 +342,6 @@ public class LocalStructureCylinder extends LocalStructure {
 		cm_vector = (float[]) ow.get();
 		
 		minutia.readFields(in);
-		valid = in.readBoolean();
 		norm = in.readFloat();
 		
 	}
@@ -356,12 +349,17 @@ public class LocalStructureCylinder extends LocalStructure {
 	@Override
 	public String toString() {
 		
-		String result = super.toString() + ";" + minutia.toString() + ";" + valid + ";" + norm + ";";
+		String result = super.toString() + ";" + minutia.toString() + ";" + norm + ";";
 		
 		for(float i : cm_vector)
 			result = result + " " + i;
 		
 		return result;
+	}
+
+	@Override
+	public boolean isValid() {
+		return (norm != -1);
 	}
 	
 	
@@ -409,11 +407,6 @@ public class LocalStructureCylinder extends LocalStructure {
 	public ArrayWritable newArrayWritable() {
 		return new LSCylinderArray();
 	}
-	
-	public boolean isValid() {
-		return valid;
-	}
-
 
 
 	public static LocalStructureCylinder [][] loadLSMapFile(Configuration conf) {

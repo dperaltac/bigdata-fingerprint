@@ -168,38 +168,25 @@ public class PartialScoreLSSR implements PartialScore {
 
 		float sl;
 
-		// If the cylinder is not valid, no partial score is computed
-		if(!((LocalStructureCylinder) ls).isValid()) {
-
-			tls = null;
-			lmatches = null;
-
-			return;
-		}
-
 		tls = new HashMap<Integer, Minutia>(1);
 		tls.put(ls.getLSid(), ((LocalStructureCylinder) ls).getMinutia());
 
 		// als.length is an upper bound of the real nr
 		lmatches = new TopN<LocalMatch>((int)Math.floor(als.length * NRFACTOR));
 
-		for(int i = 0; i < als.length; i++) {
+		for(LocalStructure ils : als) {
 
-			LocalStructureCylinder ilsc = (LocalStructureCylinder) als[i];
+			try {
+				sl = ls.similarity(ils);
 
-			// If the cylinder is not valid, no partial score is computed
-			if(ilsc.isValid()) {
-				try {
-					sl = ls.similarity(ilsc);
+				if(sl > 0.0) 
+					lmatches.add(new LocalMatch(ls.getLSid(), ils.getLSid(), sl));
 
-					if(sl > 0.0) 
-						lmatches.add(new LocalMatch(ls.getLSid(), ilsc.getLSid(), sl));
-
-				} catch (LSException e) {
-					System.err.println(e.getMessage());
-					e.printStackTrace();
-				}
+			} catch (LSException e) {
+				System.err.println(e.getMessage());
+				e.printStackTrace();
 			}
+
 		}
 	}
 

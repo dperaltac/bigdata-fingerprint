@@ -23,14 +23,12 @@ public class LSBuilderMapper extends Mapper<LongWritable, Text, Text, LocalStruc
 		  e.printStackTrace();
 		  MatcherClass = LocalStructureJiang.class;
 	  }
-	  
-	  boolean discarding = (context.getConfiguration().getBoolean("discarding", false));
 
-	  LocalStructure [] lslist = LocalStructure.extractLocalStructures(MatcherClass, value.toString(), discarding);		  
+	  LocalStructure [] lslist = LocalStructure.extractLocalStructures(MatcherClass, value.toString());		  
 	  
 	  for(LocalStructure ls : lslist) {
-		  context.write(new Text(MatcherClass.getName() + ";" + ls.getFpid()), ls);
-//		  context.write(new Text(MatcherClass.getName() + ";" + ls.getFpid()), new GenericLSWrapper(ls));
+		  if(ls.isValid())
+			  context.write(new Text(MatcherClass.getName() + ";" + ls.getFpid()), ls);
 	  }
   }
   

@@ -129,32 +129,27 @@ public class LocalStructureJiang extends LocalStructure {
 	public Minutia getMinutia() {
 		return new Minutia(minutia);
 	}
+
+	@Override
+	public boolean isValid() {
+		for(float d : fvdist)
+			if(d > MAXDIST || d < MINDIST)
+				return false;
+		
+		return true;
+	}
 	
 	public static LocalStructureJiang [] extractLocalStructures(String fpid,
 			ArrayList<Minutia> minutiae,
 			float[][] distance_matrix,
-			int[][] neighborhood,
-			boolean discarding) {
+			int[][] neighborhood) {
 		
 		LocalStructureJiang [] ls = new LocalStructureJiang[minutiae.size()];
 		
-		for(int i = 0; i < minutiae.size(); i++) {
-
-			int firstnb = neighborhood[i][0];
-			int lastnb  = neighborhood[i][NN-1];
-			
-			if(!discarding || (distance_matrix[i][lastnb] <= MAXDIST && distance_matrix[i][firstnb] >= MINDIST))
-				ls[i] = new LocalStructureJiang(fpid, i, minutiae, i, distance_matrix[i], neighborhood[i]);
-			else {
-				System.out.println("Discarded: " + distance_matrix[i][firstnb] + ", " + distance_matrix[i][lastnb]);
-				ls[i] = null;
-			}
-		}
+		for(int i = 0; i < minutiae.size(); i++)
+			ls[i] = new LocalStructureJiang(fpid, i, minutiae, i, distance_matrix[i], neighborhood[i]);
 		
-		if(discarding)
-			return Util.removeNullsFromVector(ls);
-		else
-			return ls;
+		return ls;
 	}
 
 	

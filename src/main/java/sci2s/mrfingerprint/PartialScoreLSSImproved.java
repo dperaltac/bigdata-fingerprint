@@ -55,29 +55,20 @@ public class PartialScoreLSSImproved implements PartialScore {
 
 	public PartialScoreLSSImproved(LocalStructure ls, LocalStructure [] als) {
 
-		// If the cylinder is not valid, no partial score is computed
-		if(!((LocalStructureCylinder) ls).isValid()) {
-			bestsimilarities = new float[0];
-			return;
-		}
-
 		TopN<Float> gamma = new TopN<Float>(AVGNP);
 		float sl;
 
 		for(LocalStructure ils : als) {
 
-			// If the cylinder is not valid, no partial score is computed
-			if(((LocalStructureCylinder) ils).isValid()) {
-				try {
-					sl = ls.similarity(ils);
+			try {
+				sl = ls.similarity(ils);
 
-					if(sl > 0.0)
-						gamma.add(sl);
+				if(sl > 0.0)
+					gamma.add(sl);
 
-				} catch (LSException e) {
-					System.err.println(e.getMessage());
-					e.printStackTrace();
-				}
+			} catch (LSException e) {
+				System.err.println(e.getMessage());
+				e.printStackTrace();
 			}
 		}
 
