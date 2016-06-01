@@ -101,6 +101,10 @@ public class Minutia implements WritableComparable<Minutia>, java.io.Serializabl
 		return theta;
 	}
 	
+	public byte getcbT() {
+		return (byte) (256-theta);
+	}
+	
 	public byte getQuality() {
 		return quality;
 	}

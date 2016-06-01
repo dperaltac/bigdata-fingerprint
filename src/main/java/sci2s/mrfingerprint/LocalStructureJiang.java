@@ -23,30 +23,34 @@ public class LocalStructureJiang extends LocalStructure {
 	 */
 	private static final long serialVersionUID = 1L;
 	public static final int NN = 2;
-	public static final float BL = 6*3*NN;
-	public static final float W[] = {1, (float)(0.3*180/Math.PI), (float)(0.3*180/Math.PI)};
+	public static final int BL = 6*3*NN;
+//	public static final float W[] = {1, (float)(0.3*180/Math.PI), (float)(0.3*180/Math.PI)};
+	public static final float W[] = {1, (float)(0.3*180/128), (float)(0.3*180/128)};
 	public static final float BG[] = {8.0f, (float)(Math.PI/6.0), (float)(Math.PI/6.0)};
 	
 	// Improvements
 	public static final float LOCALBBOX[] = {250, 250, (float)(0.75*Math.PI)};
 	public static final int MINDIST = 0;
 	public static final int MAXDIST = 50;
-	
-	protected float[] fv;
+
+	protected float[] fvdist;
+	protected byte[] fvangle;
 	
 	protected Minutia minutia;
 	
 	public LocalStructureJiang() {
 		super();
 
-		fv = new float[3*NN];
+		fvdist = new float[NN];
+		fvangle = new byte[2*NN];
 		minutia = new Minutia();
 	}
 	
 	public LocalStructureJiang(LocalStructureJiang lsj) {
 		super(lsj);
 
-		fv = Arrays.copyOf(lsj.fv, lsj.fv.length);
+		fvdist = Arrays.copyOf(lsj.fvdist, lsj.fvdist.length);
+		fvangle = Arrays.copyOf(lsj.fvangle, lsj.fvangle.length);
 		minutia = new Minutia(lsj.minutia);
 	}
 	
@@ -68,13 +72,16 @@ public class LocalStructureJiang extends LocalStructure {
 		if(stfv.countTokens() != 3*NN) {
 			throw new LSException("LocalStructureJiang(String): error when reading \"" + stfv.toString() + "\": it has " + stfv.countTokens() + " instead of 3*NN = " + 3*NN);
 		}
-		
-		fv = new float[stfv.countTokens()];
+
+		fvdist = new float[NN];
+		fvangle = new byte[2*NN];
 		
 		int i = 0;
 		
 		while(stfv.hasMoreTokens()) {
-			fv[i] = Float.parseFloat(stfv.nextToken());
+			fvdist[i] = Float.parseFloat(stfv.nextToken());
+			fvangle[2*i] = Byte.parseByte(stfv.nextToken());
+			fvangle[2*i+1] = Byte.parseByte(stfv.nextToken());
 			i++;
 		}
 	}
@@ -82,18 +89,22 @@ public class LocalStructureJiang extends LocalStructure {
 	public LocalStructureJiang(String fpid, int lsid) {
 
 		super(fpid,lsid);
-		fv = new float[3*NN];
+
+		fvdist = new float[NN];
+		fvangle = new byte[2*NN];
 		minutia = new Minutia();
 	}
 	
 	public LocalStructureJiang(String fpid, int lsid, ArrayList<Minutia> minutiae, int minutia_id, float[] distances, int[] neighbors) {
 		
 		super(fpid,lsid);
-		fv = new float[3*NN];
+
+		fvdist = new float[NN];
+		fvangle = new byte[2*NN];
 		
 		minutia = new Minutia(minutiae.get(minutia_id));
 		
-		float angle = minutia.getcrnT();
+		byte angle = minutia.getcbT();
 		int coordx = minutia.getX();
 		int coordy = minutia.getY();
 		
@@ -101,13 +112,15 @@ public class LocalStructureJiang extends LocalStructure {
 			int neighbor = neighbors[k];
 			
 			// Distance computation
-			fv[k] = distances[neighbor];
+			fvdist[k] = distances[neighbor];
+			
+			double angle2 = Math.atan2(coordy - minutiae.get(neighbor).getY(), coordx - minutiae.get(neighbor).getX());
 			
 			// Radial angle computation
-			fv[k + NN] = Util.dFi((float) Math.atan2(coordy - minutiae.get(neighbor).getY(), coordx - minutiae.get(neighbor).getX()), angle);
+			fvangle[k] = Util.dFi256((byte) (angle2*128/Math.PI), angle);
 			
 			// Minutia direction computation
-			fv[k + 2*NN] = Util.dFi(angle, minutiae.get(neighbor).getcrnT());
+			fvangle[k + NN] = Util.dFi256(angle, minutiae.get(neighbor).getcbT());
 		}
 		
 	}
@@ -149,10 +162,12 @@ public class LocalStructureJiang extends LocalStructure {
 	public void write(DataOutput out) throws IOException {
 
 		super.write(out);
-		
-		ArrayPrimitiveWritable ow = new ArrayPrimitiveWritable(fv);
-		
-		ow.write(out);
+
+		ArrayPrimitiveWritable ow1 = new ArrayPrimitiveWritable(fvdist);
+		ArrayPrimitiveWritable ow2 = new ArrayPrimitiveWritable(fvangle);
+
+		ow1.write(out);
+		ow2.write(out);
 		minutia.write(out);
 		
 	}
@@ -161,21 +176,27 @@ public class LocalStructureJiang extends LocalStructure {
 	public void readFields(DataInput in) throws IOException {
 
 		super.readFields(in);
-		
-		ArrayPrimitiveWritable ow = new ArrayPrimitiveWritable(fv);
-		
-		ow.readFields(in);
+
+		ArrayPrimitiveWritable ow1 = new ArrayPrimitiveWritable(fvdist);
+		ArrayPrimitiveWritable ow2 = new ArrayPrimitiveWritable(fvangle);
+
+		ow1.readFields(in);
+		ow2.readFields(in);
 		minutia.readFields(in);
-		
-		fv = (float[]) ow.get();
+
+		fvdist = (float[]) ow1.get();
+		fvangle = (byte[]) ow2.get();
 	}
 	
 	@Override
 	public String toString() {
 		
 		String result = super.toString() + ";" + minutia.toString() + ";";
+
+		for(float i : fvdist)
+			result = result + " " + i;
 		
-		for(double i : fv)
+		for(byte i : fvangle)
 			result = result + " " + i;
 		
 		return result;
@@ -214,9 +235,9 @@ public class LocalStructureJiang extends LocalStructure {
 //			}
 
 			
-			sum += Math.abs(fv[k]-lsj.fv[k]) * W[0];
-			sum += Math.abs(Util.dFi(fv[k+NN], lsj.fv[k+NN])) * W[1];
-			sum += Math.abs(Util.dFi(fv[k+2*NN], lsj.fv[k+2*NN])) * W[2];
+			sum += Math.abs(fvdist[k]-lsj.fvdist[k]) * W[0];
+			sum += Math.abs(Util.dFi256(fvangle[k]   , lsj.fvangle[k]   )) * W[1];
+			sum += Math.abs(Util.dFi256(fvangle[k+NN], lsj.fvangle[k+NN])) * W[2];
 		}
 		
 		if(sum < BL)
