@@ -16,6 +16,7 @@ public class GenericPSWrapper extends GenericWritable {
 		PartialScoreLSS.class,
 		PartialScoreLSSR.class,
 		PartialScoreLSSImproved.class,
+		PartialScoreLSSThreshold.class,
 		PartialScoreLSSRImproved.class
 	};
 	

@@ -3,6 +3,7 @@ import java.io.IOException;
 
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Counter;
 
 public class MatchingMapper extends Mapper<Text, LocalStructure, PartialScoreKey, GenericPSWrapper> {
 
@@ -10,10 +11,18 @@ public class MatchingMapper extends Mapper<Text, LocalStructure, PartialScoreKey
 	protected PartialScore pssample;
 
 	protected PartialScoreKey psk = new PartialScoreKey();
+	
+	static enum MapCountersEnum { TOTAL_MAP_MILLIS , TOTAL_MAPTASK_MILLIS , MAPTASK_NUMBER }
+	
+	Counter counter_map_millis;
+	Counter counter_maptask_millis;
+	long maptask_init_time;
 
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
 		super.setup(context);
+		
+		maptask_init_time = System.currentTimeMillis();
 
 		inputls = LocalStructure.loadLSMapFile(context.getConfiguration());
 
@@ -26,11 +35,23 @@ public class MatchingMapper extends Mapper<Text, LocalStructure, PartialScoreKey
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		counter_map_millis = context.getCounter(MapCountersEnum.class.getName(),
+				MapCountersEnum.TOTAL_MAP_MILLIS.toString());
+
+		counter_maptask_millis = context.getCounter(MapCountersEnum.class.getName(),
+				MapCountersEnum.TOTAL_MAPTASK_MILLIS.toString());
+
+		Counter maptask_number = context.getCounter(MapCountersEnum.class.getName(),
+				MapCountersEnum.MAPTASK_NUMBER.toString());
+		maptask_number.increment(1);
 	}
 
 	@Override
 	public void map(Text key, LocalStructure value, Context context)
 	throws IOException, InterruptedException {
+		
+		long init_time = System.currentTimeMillis();
 
 		// De-serialize the LocalStructure in "value"
 		LocalStructure ls = value;
@@ -52,6 +73,15 @@ public class MatchingMapper extends Mapper<Text, LocalStructure, PartialScoreKey
 				context.write(psk, gpsw);
 			}
 		}
+
+        counter_map_millis.increment(System.currentTimeMillis() - init_time);
+	}
+
+	@Override
+	protected void cleanup(Context context) throws IOException, InterruptedException {
+		super.cleanup(context);
+
+		counter_maptask_millis.increment(System.currentTimeMillis() - maptask_init_time);
 	}
 
 }

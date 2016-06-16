@@ -373,6 +373,8 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 			fpid.set(ails[0].getFpid());
 			
 			ails = Util.removeNonValidLS(ails);
+			if(ails.length == 0)
+				System.out.println("ERROOOOOOOOOOR: " + ails.length);
 
 		    try {
 		    	aw = ails[0].newArrayWritable(ails);

@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Reducer;
 
 public class MatchingReducer extends Reducer<PartialScoreKey, GenericPSWrapper, DoubleWritable, Text> {
@@ -14,8 +15,21 @@ public class MatchingReducer extends Reducer<PartialScoreKey, GenericPSWrapper, 
 	protected DoubleWritable outkey = new DoubleWritable();
 	protected Text outvalue = new Text();
 	
+	static enum ReduceCountersEnum {
+		TOTAL_REDUCE_MILLIS ,
+		TOTAL_REDUCETASK_MILLIS ,
+		REDUCE_NUMBER ,
+		REDUCETASK_NUMBER }
+	
+	Counter counter_reduce_millis;
+	Counter counter_reducetask_millis;
+	Counter counter_reduce_number;
+	long reducetask_init_time;
+	
 	@Override
 	public void setup(Context context) {
+		
+		reducetask_init_time = System.currentTimeMillis();
 
 		try {
 			pssample = (PartialScore) Util.getClassFromProperty(context, "PartialScore").newInstance();
@@ -27,11 +41,26 @@ public class MatchingReducer extends Reducer<PartialScoreKey, GenericPSWrapper, 
 			e.printStackTrace();
 		}
 		infomap = pssample.loadReducerInfoFile(context.getConfiguration());
+
+		counter_reduce_millis = context.getCounter(ReduceCountersEnum.class.getName(),
+				ReduceCountersEnum.TOTAL_REDUCE_MILLIS.toString());
+
+		counter_reducetask_millis = context.getCounter(ReduceCountersEnum.class.getName(),
+				ReduceCountersEnum.TOTAL_REDUCETASK_MILLIS.toString());
+
+		counter_reduce_number = context.getCounter(ReduceCountersEnum.class.getName(),
+				ReduceCountersEnum.REDUCE_NUMBER.toString());
+
+		Counter maptask_number = context.getCounter(ReduceCountersEnum.class.getName(),
+				ReduceCountersEnum.REDUCETASK_NUMBER.toString());
+		maptask_number.increment(1);
 	}
 
 	@Override
 	public void reduce(PartialScoreKey key, Iterable<GenericPSWrapper> values, Context context) 
 			throws IOException, InterruptedException {
+		
+		long init_time = System.currentTimeMillis();
 
 		// Aggregate the PartialScore set
 		double score = pssample.aggregateG(key, values, infomap);
@@ -42,5 +71,15 @@ public class MatchingReducer extends Reducer<PartialScoreKey, GenericPSWrapper, 
 		// Insert the score + fpid into the output
 		if(score > 0.0)
 			context.write(outkey, outvalue);
+
+        counter_reduce_millis.increment(System.currentTimeMillis() - init_time);
+        counter_reduce_number.increment(1);
+	}
+
+	@Override
+	protected void cleanup(Context context) throws IOException, InterruptedException {
+		super.cleanup(context);
+
+		counter_reducetask_millis.increment(System.currentTimeMillis() - reducetask_init_time);
 	}
 }
