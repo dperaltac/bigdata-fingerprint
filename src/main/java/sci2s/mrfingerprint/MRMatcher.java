@@ -30,6 +30,7 @@ public class MRMatcher extends Configured implements Tool{
 		System.err.println("\t-D PartialScore={PartialScoreJiang|PartialScoreLSS|PartialScoreLSSR}\tNo default");
 		System.err.println("\t-D MapFileName=<file> \tDefault: " + Util.MAPFILEDEFAULTNAME);
 		System.err.println("\t-D InfoFileName=<file>\tDefault: " + Util.INFOFILEDEFAULTNAME);
+		System.err.println("\t-D threshold=<0.0-1.0>\tDefault: " + Util.DEFAULTTHRESHOLD);
 	}
 
 	public int run(String[] arg0) throws Exception {

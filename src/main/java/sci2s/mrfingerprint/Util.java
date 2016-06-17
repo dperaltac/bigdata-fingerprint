@@ -31,6 +31,7 @@ public class Util {
 	public final static String MAPFILENAMEPROPERTY = "MapFileName";
 	public final static String INFOFILEDEFAULTNAME = "InputLocalStructures.InfoFile";
 	public final static String INFOFILENAMEPROPERTY = "InfoFileName";
+	public final static String DEFAULTTHRESHOLD = "0.0f";
 	
 	private Util() {};
 	
@@ -373,5 +374,9 @@ public class Util {
 		}
 
 		return list.toArray(new LocalStructure[list.size()]);
+	}
+	
+	public static float getThreshold(Configuration conf) {
+		return Float.parseFloat(conf.get("threshold", DEFAULTTHRESHOLD));
 	}
 }

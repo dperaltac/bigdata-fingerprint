@@ -22,16 +22,16 @@ public class LocalStructureJiang extends LocalStructure {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	public static final int NN = 2;
+	public static final int NN = 4;
 	public static final int BL = 6*3*NN;
 //	public static final float W[] = {1, (float)(0.3*180/Math.PI), (float)(0.3*180/Math.PI)};
 	public static final float W[] = {1, (float)(0.3*180/128), (float)(0.3*180/128)};
 	public static final float BG[] = {8.0f, (float)(Math.PI/6.0), (float)(Math.PI/6.0)};
 	
 	// Improvements
-	public static final float LOCALBBOX[] = {250, 250, (float)(0.75*Math.PI)};
+	public static final int LOCALBBOX[] = {250, 250, 96};
 	public static final int MINDIST = 0;
-	public static final int MAXDIST = 50;
+	public static final int MAXDIST = 80;
 
 	protected float[] fvdist;
 	protected byte[] fvangle;
@@ -130,6 +130,7 @@ public class LocalStructureJiang extends LocalStructure {
 		return new Minutia(minutia);
 	}
 
+	// Improvement: discard neighborhoods where the minutiae are very far or very close
 	@Override
 	public boolean isValid() {
 		for(float d : fvdist)
@@ -212,23 +213,11 @@ public class LocalStructureJiang extends LocalStructure {
 		// Check bounding box for the minutiae
 		if(Math.abs(minutia.getX()-lsj.minutia.getX()) >= LOCALBBOX[0] ||
 				Math.abs(minutia.getY()-lsj.minutia.getY()) >= LOCALBBOX[1] ||
-				Math.abs(Util.dFi(minutia.getrT(), lsj.minutia.getrT())) >= LOCALBBOX[2])
+				Math.abs(Util.dFi256(minutia.getbT(), lsj.minutia.getbT())) >= LOCALBBOX[2])
 			return 0.0f;
 		
-		// Improvement: discard neighborhoods where the minutiae are very far or very close
 		
 		for(int k = 0; k < NN && sum < BL; k++) {
-			
-//			if(fv[k] >= MAXDIST || fv[k] <= MINDIST) {
-//				System.out.println("Discarding local structure " + lsid);
-//				return 0.0;
-//			}
-//
-//			if(lsj.fv[k] >= MAXDIST || lsj.fv[k] <= MINDIST) {
-//				System.out.println("Discarding local structure " + lsj.lsid);
-//				return 0.0;
-//			}
-
 			
 			sum += Math.abs(fvdist[k]-lsj.fvdist[k]) * W[0];
 			sum += Math.abs(Util.dFi256(fvangle[k]   , lsj.fvangle[k]   )) * W[1];

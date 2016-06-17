@@ -19,18 +19,18 @@ import org.apache.hadoop.io.Writable;
 public class PartialScoreJiangLocal implements PartialScore {
 	
 	protected SortedSet<LocalMatch> lmatches;
-	int templatesize;	
+	int templatesize;
 	
 	static protected class LocalMatch implements Comparable<LocalMatch>, Writable {
 
 		public int b1;
 		public int b2;
-		public double sl;
+		public float sl;
 
 		public LocalMatch() {
 			b1 = 0;
 			b2 = 0;
-			sl = 0.0;
+			sl = 0.0f;
 		}
 		
 		public LocalMatch(LocalMatch o) {
@@ -39,7 +39,7 @@ public class PartialScoreJiangLocal implements PartialScore {
 			sl = o.sl;
 		}
 		
-		public LocalMatch(int b1, int b2, double sl) {
+		public LocalMatch(int b1, int b2, float sl) {
 			this.b1 = b1;
 			this.b2 = b2;
 			this.sl = sl;
@@ -61,13 +61,13 @@ public class PartialScoreJiangLocal implements PartialScore {
 		public void readFields(DataInput arg0) throws IOException {
 			b1 = arg0.readInt();
 			b2 = arg0.readInt();
-			sl = arg0.readDouble();
+			sl = arg0.readFloat();
 		}
 
 		public void write(DataOutput arg0) throws IOException {
 			arg0.writeInt(b1);
 			arg0.writeInt(b2);
-			arg0.writeDouble(sl);
+			arg0.writeFloat(sl);
 		}
 	}
 	
@@ -92,7 +92,7 @@ public class PartialScoreJiangLocal implements PartialScore {
 		for(LocalStructure ils : als) {
 
 			try {
-				double sl = ls.similarity(ils);
+				float sl = ls.similarity(ils);
 				
 				if(sl > 0.0)
 					lmatches.add(new LocalMatch(ls.getLSid(), ils.getLSid(), sl));
@@ -163,21 +163,7 @@ public class PartialScoreJiangLocal implements PartialScore {
 
 		PartialScoreJiangLocal bestps = new PartialScoreJiangLocal(values);
 
-		return bestps.computeScore(key.getFpidInput().toString(), infomap);
-	}
-	
-
-	public static Map<String, LocalStructureJiang[]> loadInfoFile(Configuration conf) {
-    	
-    	Map<String, LocalStructureJiang[]> infomap = new HashMap<String, LocalStructureJiang[]>();
-    	
-    	LocalStructureJiang [][] ilsarray = LocalStructureJiang.loadLSMapFile(conf);
-    	
-    	for(LocalStructureJiang[] ails : ilsarray) {
-    		infomap.put(ails[0].getFpid(), ails);
-    	}
-		
-		return infomap;
+		return bestps.computeScore();
 	}
 
 	public Map<?, ?> loadCombinerInfoFile(Configuration conf) {
@@ -186,7 +172,7 @@ public class PartialScoreJiangLocal implements PartialScore {
 	}
 
 	public Map<?, ?> loadReducerInfoFile(Configuration conf) {
-		return loadInfoFile(conf);
+		return null;
 	}
 
 	public <T extends LocalStructure> boolean isCompatibleLS(Class<T> lsclass) {
@@ -258,14 +244,18 @@ public class PartialScoreJiangLocal implements PartialScore {
 
 	public float computeScore(String input_fpid, Map<?, ?> infomap) {
 		
+		return computeScore();
+	}
+
+	public float computeScore() {
+		
 		float score = 0.0f;
-		int inputsize = ((LocalStructureJiang[]) infomap.get(input_fpid)).length;
 		
 		reduceLmatches();
 		
 		for(LocalMatch lm : lmatches)
 			score += lm.sl;
 		
-		return(score / Math.max(inputsize, templatesize));
+		return(score / templatesize);
 	}
 }

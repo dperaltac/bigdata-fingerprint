@@ -15,6 +15,8 @@ public class MatchingReducer extends Reducer<PartialScoreKey, GenericPSWrapper, 
 	protected DoubleWritable outkey = new DoubleWritable();
 	protected Text outvalue = new Text();
 	
+	protected float threshold;
+	
 	static enum ReduceCountersEnum {
 		TOTAL_REDUCE_MILLIS ,
 		TOTAL_REDUCETASK_MILLIS ,
@@ -54,6 +56,8 @@ public class MatchingReducer extends Reducer<PartialScoreKey, GenericPSWrapper, 
 		Counter maptask_number = context.getCounter(ReduceCountersEnum.class.getName(),
 				ReduceCountersEnum.REDUCETASK_NUMBER.toString());
 		maptask_number.increment(1);
+		
+		threshold = Util.getThreshold(context.getConfiguration());
 	}
 
 	@Override
@@ -64,13 +68,13 @@ public class MatchingReducer extends Reducer<PartialScoreKey, GenericPSWrapper, 
 
 		// Aggregate the PartialScore set
 		double score = pssample.aggregateG(key, values, infomap);
-		
-		outkey.set(score);
-		outvalue.set(key.toString());
 
 		// Insert the score + fpid into the output
-		if(score > 0.0)
+		if(score > threshold) {
+			outkey.set(score);
+			outvalue.set(key.toString());
 			context.write(outkey, outvalue);
+		}
 
         counter_reduce_millis.increment(System.currentTimeMillis() - init_time);
         counter_reduce_number.increment(1);
