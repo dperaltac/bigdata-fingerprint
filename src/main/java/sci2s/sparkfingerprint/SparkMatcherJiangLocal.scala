@@ -19,14 +19,14 @@ import scala.collection.Iterable
 import sci2s.mrfingerprint.LSJiangArray
 import sci2s.mrfingerprint.LocalStructureJiang
 import sci2s.mrfingerprint.LocalStructure
-import sci2s.mrfingerprint.PartialScoreJiang
+import sci2s.mrfingerprint.PartialScoreJiangLocal
 import sci2s.mrfingerprint.PartialScore
 
 
-object SparkMatcherJiang {
+object SparkMatcherJiangLocal {
   
   val usage = """
-    Usage: SparkMatcherJiang
+    Usage: SparkMatcherJiangLocal
       [--template-file path]
       [--map-file path]
       [--output-dir path]
@@ -158,8 +158,8 @@ object SparkMatcherJiang {
 
           // For each template LS, compute the partial score with the input fingerprint ilsarray
           val score = tlsarray.map ({ ls =>
-            new PartialScoreJiang(ls, ils._2.asInstanceOf[Array[LocalStructure]])
-            }).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreJiang]).computeScore(ils._2)
+            new PartialScoreJiangLocal(ls, ils._2.asInstanceOf[Array[LocalStructure]])
+            }).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreJiangLocal]).computeScore()
             
           (ils._1, score)
         }

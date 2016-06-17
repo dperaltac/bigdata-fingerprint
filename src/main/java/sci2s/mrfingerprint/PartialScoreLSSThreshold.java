@@ -139,8 +139,6 @@ public class PartialScoreLSSThreshold implements PartialScore {
 	}
 
 	public float computeScore() {
-
-		System.out.println("NUM: " + num);
 		return avgsim / num;
 	}
 

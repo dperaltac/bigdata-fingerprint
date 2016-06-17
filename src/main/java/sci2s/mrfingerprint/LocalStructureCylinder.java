@@ -4,12 +4,14 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.ArrayPrimitiveWritable;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.MapFile;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.zookeeper.common.IOUtils;
@@ -434,6 +436,41 @@ public class LocalStructureCylinder extends LocalStructure {
 		IOUtils.closeStream(lsmapfile);
 		
 		return result;		
+	}
+	
+	
+
+
+	public static void saveLSMapFile(LocalStructure[][] inputls, Configuration conf) {
+
+		String name = conf.get(Util.MAPFILENAMEPROPERTY, Util.MAPFILEDEFAULTNAME);
+		
+    	MapFile.Writer lsmapfile = Util.createMapFileWriter(conf, name, Text.class, inputls[0][0].newArrayWritable().getClass());
+    	
+    	Arrays.sort(inputls, new Comparator<LocalStructure[]>() {
+		   public int compare(LocalStructure [] als1, LocalStructure [] als2) {
+		      return als1[0].getFpid().compareTo(als2[0].getFpid());
+		   }
+		});
+    	
+    	Text fpid = new Text();
+    	ArrayWritable aw = null;
+
+		for(LocalStructure [] ails : inputls) {
+			fpid.set(ails[0].getFpid());
+
+		    try {
+		    	aw = ails[0].newArrayWritable(ails);
+		    	lsmapfile.append(fpid, aw);
+			} catch (IOException e) {
+				System.err.println("LocalStructureCylinder.saveLSMapFile: unable to save fingerprint "
+						+ fpid.toString() + " in MapFile " + name + ": " + e.getMessage());
+				e.printStackTrace();
+			}
+		}
+		
+		IOUtils.closeStream(lsmapfile);
+		
 	}
 
 }

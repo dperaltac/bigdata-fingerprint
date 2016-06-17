@@ -16,18 +16,19 @@ import org.apache.spark.util.SizeEstimator
 import scala.collection.JavaConverters._
 import scala.collection.Iterable
 
-import sci2s.mrfingerprint.LSJiangArray
-import sci2s.mrfingerprint.LocalStructureJiang
+import sci2s.mrfingerprint.LSCylinderArray
+import sci2s.mrfingerprint.LocalStructureCylinder
 import sci2s.mrfingerprint.LocalStructure
-import sci2s.mrfingerprint.PartialScoreJiang
+import sci2s.mrfingerprint.PartialScoreLSSThreshold
 import sci2s.mrfingerprint.PartialScore
 
 
-object SparkMatcherJiang {
+object SparkMatcherLSSThreshold {
   
   val usage = """
-    Usage: SparkMatcherJiang
+    Usage: SparkMatcherJiangLocal
       [--template-file path]
+      [--info-file path]
       [--map-file path]
       [--output-dir path]
       [--num-partitions num]
@@ -90,9 +91,9 @@ object SparkMatcherJiang {
       
       // Register classes for serialization
       conf.registerKryoClasses(Array(
-          classOf[sci2s.mrfingerprint.LSJiangArray],
+          classOf[sci2s.mrfingerprint.LSCylinderArray],
           classOf[org.apache.hadoop.io.Text],
-          classOf[sci2s.mrfingerprint.LocalStructureJiang],
+          classOf[sci2s.mrfingerprint.LocalStructureCylinder],
           classOf[org.apache.hadoop.mapred.JobConf]))
 
       // Set SparkContext
@@ -101,8 +102,8 @@ object SparkMatcherJiang {
       val initialtime = System.currentTimeMillis
 
 			// Read template database
-			val templateLS = sc.sequenceFile[String, LocalStructureJiang](templateFile) //.partitionBy(new HashPartitioner(numPartitions))
-          .mapValues(new LocalStructureJiang(_))
+			val templateLS = sc.sequenceFile[String, LocalStructureCylinder](templateFile) //.partitionBy(new HashPartitioner(numPartitions))
+          .mapValues(new LocalStructureCylinder(_))
 
 			// FOR DEBUGGING
       if(DEBUG) {
@@ -113,8 +114,8 @@ object SparkMatcherJiang {
       }
 
 			// Read input fingerprint(s)
-	    val inputLSRDD = sc.sequenceFile[String, LSJiangArray](mapFileName)
-        .mapValues(new LSJiangArray(_).get().map(_.asInstanceOf[LocalStructureJiang]))
+	    val inputLSRDD = sc.sequenceFile[String, LSCylinderArray](mapFileName)
+        .mapValues(new LSCylinderArray(_).get().map(_.asInstanceOf[LocalStructureCylinder]))
       
       // Broadcast the input fingerprint(s)
       val inputLS = sc.broadcast(inputLSRDD.collect())
@@ -147,8 +148,8 @@ object SparkMatcherJiang {
 	}
 
   def computeScores(
-      templateLS : RDD[(String, LocalStructureJiang)],
-      inputLS : Broadcast[Array[(String, Array[LocalStructureJiang])]]) : RDD[(String, (String, Float))] = {
+      templateLS : RDD[(String, LocalStructureCylinder)],
+      inputLS : Broadcast[Array[(String, Array[LocalStructureCylinder])]]) : RDD[(String, (String, Float))] = {
       
     // First, compute the partial scores of each template LS with each input fingerprint.
     val scores = templateLS.groupByKey().flatMapValues({ tlsarray =>
@@ -158,8 +159,8 @@ object SparkMatcherJiang {
 
           // For each template LS, compute the partial score with the input fingerprint ilsarray
           val score = tlsarray.map ({ ls =>
-            new PartialScoreJiang(ls, ils._2.asInstanceOf[Array[LocalStructure]])
-            }).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreJiang]).computeScore(ils._2)
+            new PartialScoreLSSThreshold(ls, ils._2.asInstanceOf[Array[LocalStructure]])
+            }).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreLSSThreshold]).computeScore()
             
           (ils._1, score)
         }

@@ -289,7 +289,7 @@ public class PartialScoreLSSRImproved implements PartialScore {
 
 				lsmapfile.append(fpid, new MinutiaArray(ma));
 			} catch (IOException e) {
-				System.err.println("LocalStructure.saveLSMapFile: unable to save fingerprint "
+				System.err.println("LocalStructure.saveInfoFile: unable to save fingerprint "
 						+ fpid.toString() + " in MapFile " + name + ": " + e.getMessage());
 				e.printStackTrace();
 			}

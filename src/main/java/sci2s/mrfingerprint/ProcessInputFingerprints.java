@@ -1,4 +1,6 @@
 package sci2s.mrfingerprint;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -78,8 +80,26 @@ public class ProcessInputFingerprints extends Configured implements Tool{
 
 	    Configuration conf = job.getConfiguration();
 	    
-	    // Save the Local Structures in a Map File, to read them efficiently from the Mapper
-	    LocalStructure.saveLSMapFile(inputls, conf);
+	    // Save the Local Structures in a Map File, to read them efficiently from the Mapper	    
+	    try {
+	    	Method method = MatcherClass.getMethod("saveLSMapFile", LocalStructure[][].class, Configuration.class);
+			method.invoke(null, inputls, conf);
+		} catch (NoSuchMethodException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (SecurityException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	    // Save the necessary information for the Combiner and the Reducer
 	    try {
