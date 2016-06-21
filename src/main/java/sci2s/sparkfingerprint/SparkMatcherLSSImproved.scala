@@ -28,7 +28,6 @@ object SparkMatcherLSSImproved {
   val usage = """
     Usage: SparkMatcherJiangLocal
       [--template-file path]
-      [--info-file path]
       [--map-file path]
       [--output-dir path]
       [--num-partitions num]
@@ -160,7 +159,7 @@ object SparkMatcherLSSImproved {
           // For each template LS, compute the partial score with the input fingerprint ilsarray
           val score = tlsarray.map ({ ls =>
             new PartialScoreLSSImproved(ls, ils._2.asInstanceOf[Array[LocalStructure]])
-            }).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreLSSImproved]).computeScore()
+            }).filter(! _.isEmpty).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreLSSImproved]).computeScore()
             
           (ils._1, score)
         }

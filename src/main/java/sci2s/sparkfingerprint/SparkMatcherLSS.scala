@@ -159,7 +159,7 @@ object SparkMatcherLSS {
           // For each template LS, compute the partial score with the input fingerprint ilsarray
           val score = tlsarray.map ({ ls =>
             new PartialScoreLSS(ls, ils._2.asInstanceOf[Array[LocalStructure]])
-            }).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreLSS]).computeScore(ils._2.size)
+            }).filter(! _.isEmpty).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreLSS]).computeScore(ils._2.size)
             
           (ils._1, score)
         }

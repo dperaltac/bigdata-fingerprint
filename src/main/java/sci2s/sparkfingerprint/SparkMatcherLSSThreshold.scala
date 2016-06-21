@@ -160,7 +160,7 @@ object SparkMatcherLSSThreshold {
           // For each template LS, compute the partial score with the input fingerprint ilsarray
           val score = tlsarray.map ({ ls =>
             new PartialScoreLSSThreshold(ls, ils._2.asInstanceOf[Array[LocalStructure]])
-            }).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreLSSThreshold]).computeScore()
+            }).filter(! _.isEmpty).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreLSSThreshold]).computeScore()
             
           (ils._1, score)
         }

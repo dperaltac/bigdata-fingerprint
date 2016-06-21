@@ -159,7 +159,7 @@ object SparkMatcherJiangLocal {
           // For each template LS, compute the partial score with the input fingerprint ilsarray
           val score = tlsarray.map ({ ls =>
             new PartialScoreJiangLocal(ls, ils._2.asInstanceOf[Array[LocalStructure]])
-            }).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreJiangLocal]).computeScore()
+            }).filter(! _.isEmpty).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreJiangLocal]).computeScore()
             
           (ils._1, score)
         }
