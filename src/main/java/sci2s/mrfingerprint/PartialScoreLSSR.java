@@ -144,50 +144,12 @@ public class PartialScoreLSSR implements PartialScore {
 		}
 	}
 
-	// Parameter constructor. Performs the partialAggregate operation.
-	public static PartialScoreLSSR partialAggregateG(Iterable<PartialScoreLSSR> values) {
-
-		PartialScoreLSSR result = new PartialScoreLSSR();
-		
-		result.lmatches = new TopN<LocalMatch>(MAX_LMATCHES);
-		result.tls = new HashMap<Integer, Minutia>();
-
-		for(PartialScoreLSSR psc : values) {
-
-			if(psc.lmatches.getMax() < result.lmatches.getMax())
-				result.lmatches.setMax(psc.lmatches.getMax());
-
-			result.lmatches.addAll(psc.lmatches);
-			result.tls.putAll(psc.tls);
-		}
-		
-		return result;
-	}
-
 	public PartialScoreLSSR (LocalStructure ls, LocalStructure[] als) {
-
-		float sl;
-
-		tls = new HashMap<Integer, Minutia>(1);
-		tls.put(ls.getLSid(), ((LocalStructureCylinder) ls).getMinutia());
-
-		// als.length is an upper bound of the real nr
-		lmatches = new TopN<LocalMatch>((int)Math.floor(als.length * NRFACTOR));
-
-		for(LocalStructure ils : als) {
-
-			try {
-				sl = ls.similarity(ils);
-
-				if(sl > 0.0) 
-					lmatches.add(new LocalMatch(ls.getLSid(), ils.getLSid(), sl));
-
-			} catch (LSException e) {
-				System.err.println(e.getMessage());
-				e.printStackTrace();
-			}
-
-		}
+		computePartialScore(ls, als);
+	}
+	
+	public PartialScoreLSSR clone() {
+		return new PartialScoreLSSR(this);
 	}
 
 	@Override
@@ -272,8 +234,20 @@ public class PartialScoreLSSR implements PartialScore {
 		return bestps.computeScore(key.getFpidInput().toString(), infomap);
 	}
 
-	public PartialScore partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
-		return new PartialScoreLSSR(values);
+	public void partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
+		
+		lmatches = new TopN<LocalMatch>(MAX_LMATCHES);
+		tls = new HashMap<Integer, Minutia>();
+
+		for(GenericPSWrapper ps : values) {
+			PartialScoreLSSR psc = (PartialScoreLSSR) ps.get();
+
+			if(psc.lmatches.getMax() < lmatches.getMax())
+				lmatches.setMax(psc.lmatches.getMax());
+
+			lmatches.addAll(psc.lmatches);
+			tls.putAll(psc.tls);
+		}
 	}
 
 	public static int computeNP(int n_A, int n_B)
@@ -382,8 +356,30 @@ public class PartialScoreLSSR implements PartialScore {
 		return (lsclass == LocalStructureCylinder.class);
 	}
 
-	public PartialScore computePartialScore(LocalStructure ls, LocalStructure[] als) {
-		return new PartialScoreLSSR(ls, als);
+	public void computePartialScore(LocalStructure ls, LocalStructure[] als) {
+
+		float sl;
+
+		tls = new HashMap<Integer, Minutia>(1);
+		tls.put(ls.getLSid(), ((LocalStructureCylinder) ls).getMinutia());
+
+		// als.length is an upper bound of the real nr
+		lmatches = new TopN<LocalMatch>((int)Math.floor(als.length * NRFACTOR));
+
+		for(LocalStructure ils : als) {
+
+			try {
+				sl = ls.similarity(ils);
+
+				if(sl > 0.0) 
+					lmatches.add(new LocalMatch(ls.getLSid(), ils.getLSid(), sl));
+
+			} catch (LSException e) {
+				System.err.println(e.getMessage());
+				e.printStackTrace();
+			}
+
+		}
 	}
 
 	public Map<?, ?> loadCombinerInfoFile(Configuration conf) {

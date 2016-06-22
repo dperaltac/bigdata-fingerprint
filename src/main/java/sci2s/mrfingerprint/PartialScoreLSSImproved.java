@@ -32,49 +32,13 @@ public class PartialScoreLSSImproved implements PartialScore {
 		bestsimilarities = Arrays.copyOf(bs, bs.length);
 	}
 
-
-	// Parameter constructor. Performs the partialAggregateG operation.
-	public PartialScoreLSSImproved(Iterable<GenericPSWrapper> values) {
-
-		TopN<Float> best = new TopN<Float>(AVGNP);
-		PartialScoreLSSImproved psc;
-
-		// Aggregate all similarity values
-		for(GenericPSWrapper ps : values) {
-			psc = (PartialScoreLSSImproved) ps.get();
-
-			for(float sl : psc.bestsimilarities)
-				if(sl > 0.0)
-					best.add(sl);
-		}
-
-		bestsimilarities = new float[best.size()];
-		for(int i = 0; i < bestsimilarities.length; ++i)
-			bestsimilarities[i] = best.poll();
+	public PartialScoreLSSImproved(LocalStructure ls, LocalStructure [] als) {
+		computePartialScore(ls, als);
 	}
 
-	public PartialScoreLSSImproved(LocalStructure ls, LocalStructure [] als) {
-
-		TopN<Float> gamma = new TopN<Float>(AVGNP);
-		float sl;
-
-		for(LocalStructure ils : als) {
-
-			try {
-				sl = ls.similarity(ils);
-
-				if(sl > 0.0)
-					gamma.add(sl);
-
-			} catch (LSException e) {
-				System.err.println(e.getMessage());
-				e.printStackTrace();
-			}
-		}
-
-		bestsimilarities = new float[gamma.size()];
-		for(int i = 0; i < bestsimilarities.length; ++i)
-			bestsimilarities[i] = gamma.poll();
+	@Override
+	public PartialScoreLSSImproved clone() {
+		return new PartialScoreLSSImproved(this);
 	}
 
 	@Override
@@ -119,9 +83,30 @@ public class PartialScoreLSSImproved implements PartialScore {
 	}
 
 
-	public PartialScore partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
 
-		return new PartialScoreLSSImproved(values);
+	public void partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
+		partialAggregateG(values);
+	}
+
+
+	public void partialAggregateG(Iterable<GenericPSWrapper> values) {
+
+
+		TopN<Float> best = new TopN<Float>(AVGNP);
+		PartialScoreLSSImproved psc;
+
+		// Aggregate all similarity values
+		for(GenericPSWrapper ps : values) {
+			psc = (PartialScoreLSSImproved) ps.get();
+
+			for(float sl : psc.bestsimilarities)
+				if(sl > 0.0)
+					best.add(sl);
+		}
+
+		bestsimilarities = new float[best.size()];
+		for(int i = 0; i < bestsimilarities.length; ++i)
+			bestsimilarities[i] = best.poll();
 	}
 
 
@@ -138,8 +123,28 @@ public class PartialScoreLSSImproved implements PartialScore {
 		return (lsclass == LocalStructureCylinder.class);
 	}
 
-	public PartialScore computePartialScore(LocalStructure ls, LocalStructure[] als) {
-		return new PartialScoreLSSImproved(ls, als);
+	public void computePartialScore(LocalStructure ls, LocalStructure[] als) {
+
+		TopN<Float> gamma = new TopN<Float>(AVGNP);
+		float sl;
+
+		for(LocalStructure ils : als) {
+
+			try {
+				sl = ls.similarity(ils);
+
+				if(sl > 0.0)
+					gamma.add(sl);
+
+			} catch (LSException e) {
+				System.err.println(e.getMessage());
+				e.printStackTrace();
+			}
+		}
+
+		bestsimilarities = new float[gamma.size()];
+		for(int i = 0; i < bestsimilarities.length; ++i)
+			bestsimilarities[i] = gamma.poll();
 	}
 
 	public Map<?, ?> loadCombinerInfoFile(Configuration conf) {

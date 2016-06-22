@@ -88,40 +88,18 @@ public class PartialScoreJiang implements PartialScore {
 	
 
 	public PartialScoreJiang(LocalStructure ls, LocalStructure[] als) {
-
-		lsjv = new LocalStructureJiang[1];
-		lsjv[0] = (LocalStructureJiang) ls;
-		lmatches = new TopN<LocalMatch>(BEST);
-
-		// Get the input local structure with maximum similarity w.r.t. the single template local structure
-		for(LocalStructure ils : als) {
-
-			try {
-				float sl = ls.similarity(ils);
-				
-				if(sl > 0.0)
-					lmatches.add(new LocalMatch(ls.getLSid(), ils.getLSid(), sl));
-
-			} catch (LSException e) {
-				System.err.println(e.getMessage());
-				e.printStackTrace();
-			}
-		}
+		computePartialScore(ls, als);
 	}
 	
 	// Parameter constructor. Performs the partialAggregateG operation.
 	public PartialScoreJiang(Iterable<GenericPSWrapper> values) {
-
-		// Initialize member variables
-		lsjv = null;
-		lmatches = new TopN<LocalMatch>(BEST);
-		PartialScoreJiang psj;
-				
-		for(GenericPSWrapper ps : values) {
-			psj = (PartialScoreJiang) ps.get();
-			lmatches.addAll(psj.lmatches);
-			lsjv = (LocalStructureJiang[]) ArrayUtils.addAll(lsjv, psj.lsjv);
-		}
+		partialAggregateG(values);
+	}
+	
+	@Override
+	public PartialScoreJiang clone() {
+		PartialScoreJiang ps = new PartialScoreJiang(this);
+		return ps;
 	}
 	
 	public LocalStructureJiang[] getLocalStructures() {
@@ -215,15 +193,48 @@ public class PartialScoreJiang implements PartialScore {
 		return;
 	}
 
-	public PartialScore computePartialScore(LocalStructure ls,
+	public void computePartialScore(LocalStructure ls,
 			LocalStructure[] als) {
-		return new PartialScoreJiang(ls, als);
+
+		lsjv = new LocalStructureJiang[1];
+		lsjv[0] = (LocalStructureJiang) ls;
+		lmatches = new TopN<LocalMatch>(BEST);
+
+		// Get the input local structure with maximum similarity w.r.t. the single template local structure
+		for(LocalStructure ils : als) {
+
+			try {
+				float sl = ls.similarity(ils);
+				
+				if(sl > 0.0)
+					lmatches.add(new LocalMatch(ls.getLSid(), ils.getLSid(), sl));
+
+			} catch (LSException e) {
+				System.err.println(e.getMessage());
+				e.printStackTrace();
+			}
+		}
 	}
 
-	public PartialScore partialAggregateG(PartialScoreKey key,
+	public void partialAggregateG(PartialScoreKey key,
 			Iterable<GenericPSWrapper> values, Map<?, ?> infomap) {
 
-		return new PartialScoreJiang(values);
+		partialAggregateG(values);
+	}
+
+	public void partialAggregateG(Iterable<GenericPSWrapper> values) {
+
+
+		// Initialize member variables
+		lsjv = null;
+		lmatches = new TopN<LocalMatch>(BEST);
+		PartialScoreJiang psj;
+				
+		for(GenericPSWrapper ps : values) {
+			psj = (PartialScoreJiang) ps.get();
+			lmatches.addAll(psj.lmatches);
+			lsjv = (LocalStructureJiang[]) ArrayUtils.addAll(lsjv, psj.lsjv);
+		}
 	}
 
 	public boolean isEmpty() {		

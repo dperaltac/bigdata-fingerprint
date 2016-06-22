@@ -45,55 +45,15 @@ public class PartialScoreLSS implements PartialScore {
 		templatesize = ts;
 	}
 
-
-	// Parameter constructor. Performs the partialAggregateG operation.
-	public PartialScoreLSS(Iterable<GenericPSWrapper> values, int np) {
-
-		TopN<Float> best = new TopN<Float>(np);
-		PartialScoreLSS psc;
-
-		templatesize = 0;
-
-		// Aggregate all similarity values
-		for(GenericPSWrapper ps : values) {
-			psc = (PartialScoreLSS) ps.get();
-
-			for(float sl : psc.bestsimilarities)
-				if(sl > 0.0)
-					best.add(sl);
-
-			templatesize += psc.templatesize;
-		}
-
-		bestsimilarities = new float[best.size()];
-		for(int i = 0; i < bestsimilarities.length; ++i)
-			bestsimilarities[i] = best.poll();
-	}
-
 	public PartialScoreLSS(LocalStructure ls, LocalStructure [] als) {
-
-		TopN<Float> gamma = new TopN<Float>(computeNP(als.length));
-		float sl;
-
-		for(LocalStructure ils : als) {
-
-			try {
-				sl = ls.similarity(ils);
-
-				if(sl > 0.0)
-					gamma.add(sl);
-
-			} catch (LSException e) {
-				System.err.println(e.getMessage());
-				e.printStackTrace();
-			}
-		}
-
-		bestsimilarities = new float[gamma.size()];
-		for(int i = 0; i < bestsimilarities.length; ++i)
-			bestsimilarities[i] = gamma.poll();
-
-		templatesize = 1;
+		
+		computePartialScore(ls, als);
+	}
+	
+	@Override
+	public PartialScoreLSS clone() {
+		PartialScoreLSS ps = new PartialScoreLSS(this);
+		return ps;
 	}
 
 	@Override
@@ -162,9 +122,8 @@ public class PartialScoreLSS implements PartialScore {
 		return sum/np;
 
 	}
-
-
-	public PartialScore partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
+	
+	public void partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
 
 		Integer inputsize = (Integer) infomap.get(key.getFpidInput().toString());
 
@@ -172,8 +131,33 @@ public class PartialScoreLSS implements PartialScore {
 			System.err.println("No infomap value found for key " + key.getFpidInput());
 			inputsize = 50;
 		}
+		
+		partialAggregateG(values, computeNP(inputsize));
+	}
 
-		return new PartialScoreLSS(values, computeNP(inputsize));
+
+	public void partialAggregateG(Iterable<GenericPSWrapper> values, int np) {
+
+
+		TopN<Float> best = new TopN<Float>(np);
+		PartialScoreLSS psc;
+
+		templatesize = 0;
+
+		// Aggregate all similarity values
+		for(GenericPSWrapper ps : values) {
+			psc = (PartialScoreLSS) ps.get();
+
+			for(float sl : psc.bestsimilarities)
+				if(sl > 0.0)
+					best.add(sl);
+
+			templatesize += psc.templatesize;
+		}
+
+		bestsimilarities = new float[best.size()];
+		for(int i = 0; i < bestsimilarities.length; ++i)
+			bestsimilarities[i] = best.poll();
 	}
 
 
@@ -232,8 +216,30 @@ public class PartialScoreLSS implements PartialScore {
 		return (lsclass == LocalStructureCylinder.class);
 	}
 
-	public PartialScore computePartialScore(LocalStructure ls, LocalStructure[] als) {
-		return new PartialScoreLSS(ls, als);
+	public void computePartialScore(LocalStructure ls, LocalStructure[] als) {
+
+		TopN<Float> gamma = new TopN<Float>(computeNP(als.length));
+		float sl;
+
+		for(LocalStructure ils : als) {
+
+			try {
+				sl = ls.similarity(ils);
+
+				if(sl > 0.0)
+					gamma.add(sl);
+
+			} catch (LSException e) {
+				System.err.println(e.getMessage());
+				e.printStackTrace();
+			}
+		}
+
+		bestsimilarities = new float[gamma.size()];
+		for(int i = 0; i < bestsimilarities.length; ++i)
+			bestsimilarities[i] = gamma.poll();
+
+		templatesize = 1;
 	}
 
 	public Map<?, ?> loadCombinerInfoFile(Configuration conf) {

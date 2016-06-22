@@ -5,15 +5,17 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 
 
-public interface PartialScore extends Writable {
+public interface PartialScore extends Writable, Cloneable {
 
-	public PartialScore computePartialScore(LocalStructure ls, LocalStructure[] als);
+	public void computePartialScore(LocalStructure ls, LocalStructure[] als);
+
+	public PartialScore clone();
 
 //	public double aggregate(PartialScoreKey key, Iterable<PartialScore> values, Map<?, ?> infomap);
 	public float aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?, ?> infomap);
 
 //	public PartialScore partialAggregate(PartialScoreKey key, Iterable<PartialScore> values, Map<?, ?> infomap);
-	public PartialScore partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?, ?> infomap);
+	public void partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?, ?> infomap);
 	
 	// For Spark: aggregation of two accumulators
 	public PartialScore aggregateSinglePS(PartialScore ps);

@@ -107,82 +107,16 @@ public class PartialScoreLSSRImproved implements PartialScore {
 	}
 
 	// Parameter constructor. Performs the partialAggregate operation.
-//	public PartialScoreLSSRImproved(Iterable<GenericPSWrapper> values, int nr) {
-//
-//		PartialScoreLSSRImproved psc;
-//		lmatches = new TopN<LocalMatch>(nr);
-//
-//		for(GenericPSWrapper ps : values) {
-//			psc = (PartialScoreLSSRImproved) ps.get();
-//
-//			lmatches.addAll(psc.lmatches);
-//			tls.putAll(psc.tls);
-//		}
-//	}
-
-	// Parameter constructor. Performs the partialAggregate operation.
 	public PartialScoreLSSRImproved(Iterable<GenericPSWrapper> values) {
-
-		PartialScoreLSSRImproved psc;
-
-		lmatches = new TopN<LocalMatch>(MAX_LMATCHES);
-		tls = new HashMap<Integer, Minutia>();
-
-		for(GenericPSWrapper ps : values) {
-			psc = (PartialScoreLSSRImproved) ps.get();
-
-			if(psc.lmatches.getMax() < lmatches.getMax())
-				lmatches.setMax(psc.lmatches.getMax());
-
-			lmatches.addAll(psc.lmatches);
-			tls.putAll(psc.tls);
-		}
-	}
-
-	// Parameter constructor. Performs the partialAggregate operation.
-	public static PartialScoreLSSRImproved partialAggregateG(Iterable<PartialScoreLSSRImproved> values) {
-
-		PartialScoreLSSRImproved result = new PartialScoreLSSRImproved();
-		
-		result.lmatches = new TopN<LocalMatch>(MAX_LMATCHES);
-		result.tls = new HashMap<Integer, Minutia>();
-
-		for(PartialScoreLSSRImproved psc : values) {
-
-			if(psc.lmatches.getMax() < result.lmatches.getMax())
-				result.lmatches.setMax(psc.lmatches.getMax());
-
-			result.lmatches.addAll(psc.lmatches);
-			result.tls.putAll(psc.tls);
-		}
-		
-		return result;
+		partialAggregateG(values);
 	}
 
 	public PartialScoreLSSRImproved (LocalStructure ls, LocalStructure[] als) {
-
-		float sl;
-
-		tls = new HashMap<Integer, Minutia>(1);
-		tls.put(ls.getLSid(), ((LocalStructureCylinder) ls).getMinutia());
-
-		// als.length is an upper bound of the real nr
-		lmatches = new TopN<LocalMatch>(als.length / 2);
-
-		for(LocalStructure ils : als) {
-
-			try {
-				sl = ls.similarity(ils);
-
-				if(sl > 0.0) 
-					lmatches.add(new LocalMatch(ls.getLSid(), ils.getLSid(), sl));
-
-			} catch (LSException e) {
-				System.err.println(e.getMessage());
-				e.printStackTrace();
-			}
-
-		}
+		computePartialScore(ls, als);
+	}
+	
+	public PartialScoreLSSRImproved clone() {
+		return new PartialScoreLSSRImproved(this);
 	}
 
 	@Override
@@ -259,8 +193,27 @@ public class PartialScoreLSSRImproved implements PartialScore {
 		return bestps.computeScore(key.getFpidInput().toString(), infomap);
 	}
 
-	public PartialScore partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
-		return new PartialScoreLSSRImproved(values);
+	public void partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
+
+		partialAggregateG(values);
+	}
+
+	public void partialAggregateG(Iterable<GenericPSWrapper> values) {
+
+		PartialScoreLSSRImproved psc;
+
+		lmatches = new TopN<LocalMatch>(MAX_LMATCHES);
+		tls = new HashMap<Integer, Minutia>();
+
+		for(GenericPSWrapper ps : values) {
+			psc = (PartialScoreLSSRImproved) ps.get();
+
+			if(psc.lmatches.getMax() < lmatches.getMax())
+				lmatches.setMax(psc.lmatches.getMax());
+
+			lmatches.addAll(psc.lmatches);
+			tls.putAll(psc.tls);
+		}
 	}
 
 	// Saves the minutiae of the input local structures
@@ -359,8 +312,30 @@ public class PartialScoreLSSRImproved implements PartialScore {
 		return (lsclass == LocalStructureCylinder.class);
 	}
 
-	public PartialScore computePartialScore(LocalStructure ls, LocalStructure[] als) {
-		return new PartialScoreLSSRImproved(ls, als);
+	public void computePartialScore(LocalStructure ls, LocalStructure[] als) {
+
+		float sl;
+
+		tls = new HashMap<Integer, Minutia>(1);
+		tls.put(ls.getLSid(), ((LocalStructureCylinder) ls).getMinutia());
+
+		// als.length is an upper bound of the real nr
+		lmatches = new TopN<LocalMatch>(als.length / 2);
+
+		for(LocalStructure ils : als) {
+
+			try {
+				sl = ls.similarity(ils);
+
+				if(sl > 0.0) 
+					lmatches.add(new LocalMatch(ls.getLSid(), ils.getLSid(), sl));
+
+			} catch (LSException e) {
+				System.err.println(e.getMessage());
+				e.printStackTrace();
+			}
+
+		}
 	}
 
 	public Map<?, ?> loadCombinerInfoFile(Configuration conf) {

@@ -27,40 +27,12 @@ public class PartialScoreLSSThreshold implements PartialScore {
 
 	}
 
-
-	// Parameter constructor. Performs the partialAggregateG operation.
-	public PartialScoreLSSThreshold(Iterable<GenericPSWrapper> values) {
-
-		PartialScoreLSSThreshold psc;
-
-		// Aggregate all similarity values
-		for(GenericPSWrapper ps : values) {
-			psc = (PartialScoreLSSThreshold) ps.get();
-			
-			avgsim += psc.avgsim;
-			num += psc.num;
-		}
-	}
-
 	public PartialScoreLSSThreshold(LocalStructure ls, LocalStructure [] als) {
-
-		float sl;
-
-		for(LocalStructure ils : als) {
-
-			try {
-				sl = ls.similarity(ils);
-
-				if(sl > LS_THRESHOLD) {
-					avgsim += sl;
-					num++;
-				}
-
-			} catch (LSException e) {
-				System.err.println(e.getMessage());
-				e.printStackTrace();
-			}
-		}
+		computePartialScore(ls, als);
+	}
+	
+	public PartialScoreLSSThreshold clone() {
+		return new PartialScoreLSSThreshold(this);
 	}
 
 	@Override
@@ -84,13 +56,22 @@ public class PartialScoreLSSThreshold implements PartialScore {
 
 	public float aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
 
-		return (new PartialScoreLSSThreshold(values).computeScore());
+		partialAggregateG(key, values, infomap);
+		return computeScore();
 	}
 
 
-	public PartialScore partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
+	public void partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
 
-		return new PartialScoreLSSThreshold(values);
+		PartialScoreLSSThreshold psc;
+
+		// Aggregate all similarity values
+		for(GenericPSWrapper ps : values) {
+			psc = (PartialScoreLSSThreshold) ps.get();
+			
+			avgsim += psc.avgsim;
+			num += psc.num;
+		}
 	}
 
 
@@ -107,8 +88,25 @@ public class PartialScoreLSSThreshold implements PartialScore {
 		return (lsclass == LocalStructureCylinder.class);
 	}
 
-	public PartialScore computePartialScore(LocalStructure ls, LocalStructure[] als) {
-		return new PartialScoreLSSThreshold(ls, als);
+	public void computePartialScore(LocalStructure ls, LocalStructure[] als) {
+
+		float sl;
+
+		for(LocalStructure ils : als) {
+
+			try {
+				sl = ls.similarity(ils);
+
+				if(sl > LS_THRESHOLD) {
+					avgsim += sl;
+					num++;
+				}
+
+			} catch (LSException e) {
+				System.err.println(e.getMessage());
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public Map<?, ?> loadCombinerInfoFile(Configuration conf) {

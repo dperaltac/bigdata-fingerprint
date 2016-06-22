@@ -60,11 +60,11 @@ public class MatchingCombiner extends Reducer<PartialScoreKey, GenericPSWrapper,
 		long init_time = System.currentTimeMillis();
 	
 		// Aggregate the PartialScore set.	 
-		PartialScore ps = pssample.partialAggregateG(key, values, infomap);
+		pssample.partialAggregateG(key, values, infomap);
 
 		// Insert the score + fpid into the output
-		if(ps != null && !ps.isEmpty())
-			context.write(key, new GenericPSWrapper(ps));
+		if(pssample != null && !pssample.isEmpty())
+			context.write(key, new GenericPSWrapper(pssample));
 
         counter_combiner_millis.increment(System.currentTimeMillis() - init_time);
         counter_combiner_number.increment(1);
