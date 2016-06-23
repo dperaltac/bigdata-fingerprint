@@ -7,7 +7,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 
 public class MatchingCombiner extends Reducer<PartialScoreKey, GenericPSWrapper, PartialScoreKey, GenericPSWrapper> {
 	
-	protected Map<?,?> infomap;
+//	protected Map<?,?> infomap;
 	protected PartialScore pssample;
 	
 	static enum CombinerCountersEnum {
@@ -35,7 +35,7 @@ public class MatchingCombiner extends Reducer<PartialScoreKey, GenericPSWrapper,
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		infomap = pssample.loadCombinerInfoFile(context.getConfiguration());
+//		infomap = pssample.loadCombinerInfoFile(context.getConfiguration());
 
 		counter_combiner_millis = context.getCounter(CombinerCountersEnum.class.getName(),
 				CombinerCountersEnum.TOTAL_COMBINER_MILLIS.toString());
@@ -60,7 +60,8 @@ public class MatchingCombiner extends Reducer<PartialScoreKey, GenericPSWrapper,
 		long init_time = System.currentTimeMillis();
 	
 		// Aggregate the PartialScore set.	 
-		pssample.partialAggregateG(key, values, infomap);
+//		pssample.partialAggregateG(key, values, infomap);
+		pssample.partialAggregateG(values);
 
 		// Insert the score + fpid into the output
 		if(pssample != null && !pssample.isEmpty())

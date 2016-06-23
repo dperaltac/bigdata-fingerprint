@@ -15,7 +15,8 @@ public interface PartialScore extends Writable, Cloneable {
 	public float aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?, ?> infomap);
 
 //	public PartialScore partialAggregate(PartialScoreKey key, Iterable<PartialScore> values, Map<?, ?> infomap);
-	public void partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?, ?> infomap);
+//	public void partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?, ?> infomap);
+	public void partialAggregateG(Iterable<GenericPSWrapper> values);
 	
 	// For Spark: aggregation of two accumulators
 	public PartialScore aggregateSinglePS(PartialScore ps);

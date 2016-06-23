@@ -3,7 +3,12 @@ import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-public class FingerprintComparison {
+public class FingerprintComparison implements java.io.Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
 	protected String db;
 	

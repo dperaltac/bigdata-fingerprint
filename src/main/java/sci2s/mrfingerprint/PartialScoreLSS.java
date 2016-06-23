@@ -134,6 +134,11 @@ public class PartialScoreLSS implements PartialScore {
 		
 		partialAggregateG(values, computeNP(inputsize));
 	}
+	
+	public void partialAggregateG(Iterable<GenericPSWrapper> values) {
+		
+		partialAggregateG(values, computeNP(50));
+	}
 
 
 	public void partialAggregateG(Iterable<GenericPSWrapper> values, int np) {

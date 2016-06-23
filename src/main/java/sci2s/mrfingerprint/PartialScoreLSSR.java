@@ -234,7 +234,7 @@ public class PartialScoreLSSR implements PartialScore {
 		return bestps.computeScore(key.getFpidInput().toString(), infomap);
 	}
 
-	public void partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
+	public void partialAggregateG(Iterable<GenericPSWrapper> values) {
 		
 		lmatches = new TopN<LocalMatch>(MAX_LMATCHES);
 		tls = new HashMap<Integer, Minutia>();
@@ -249,6 +249,22 @@ public class PartialScoreLSSR implements PartialScore {
 			tls.putAll(psc.tls);
 		}
 	}
+
+//	public void partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
+//		
+//		lmatches = new TopN<LocalMatch>(MAX_LMATCHES);
+//		tls = new HashMap<Integer, Minutia>();
+//
+//		for(GenericPSWrapper ps : values) {
+//			PartialScoreLSSR psc = (PartialScoreLSSR) ps.get();
+//
+//			if(psc.lmatches.getMax() < lmatches.getMax())
+//				lmatches.setMax(psc.lmatches.getMax());
+//
+//			lmatches.addAll(psc.lmatches);
+//			tls.putAll(psc.tls);
+//		}
+//	}
 
 	public static int computeNP(int n_A, int n_B)
 	{

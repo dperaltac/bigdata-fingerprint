@@ -56,12 +56,12 @@ public class PartialScoreLSSThreshold implements PartialScore {
 
 	public float aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
 
-		partialAggregateG(key, values, infomap);
+		partialAggregateG(values);
 		return computeScore();
 	}
 
 
-	public void partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
+	public void partialAggregateG(Iterable<GenericPSWrapper> values) {
 
 		PartialScoreLSSThreshold psc;
 
