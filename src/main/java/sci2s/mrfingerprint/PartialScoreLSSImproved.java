@@ -148,11 +148,11 @@ public class PartialScoreLSSImproved implements PartialScore {
 	}
 
 	public Map<?, ?> loadCombinerInfoFile(Configuration conf) {
-		return loadInfoFile(conf);
+		return null;
 	}
 
 	public Map<?, ?> loadReducerInfoFile(Configuration conf) {
-		return loadInfoFile(conf);
+		return null;
 	}
 
 	public boolean isEmpty() {

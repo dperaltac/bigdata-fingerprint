@@ -107,16 +107,21 @@ public class PartialScoreLSSRImproved implements PartialScore {
 	}
 
 	// Parameter constructor. Performs the partialAggregate operation.
-	public PartialScoreLSSRImproved(Iterable<GenericPSWrapper> values) {
-		partialAggregateG(values);
-	}
+//	public PartialScoreLSSRImproved(Iterable<GenericPSWrapper> values, int nr) {
+//
+//		PartialScoreLSSRImproved psc;
+//		lmatches = new TopN<LocalMatch>(nr);
+//
+//		for(GenericPSWrapper ps : values) {
+//			psc = (PartialScoreLSSRImproved) ps.get();
+//
+//			lmatches.addAll(psc.lmatches);
+//			tls.putAll(psc.tls);
+//		}
+//	}
 
 	public PartialScoreLSSRImproved (LocalStructure ls, LocalStructure[] als) {
 		computePartialScore(ls, als);
-	}
-	
-	public PartialScoreLSSRImproved clone() {
-		return new PartialScoreLSSRImproved(this);
 	}
 
 	@Override
@@ -187,14 +192,12 @@ public class PartialScoreLSSRImproved implements PartialScore {
 
 
 	public float aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
+		partialAggregateG(values);
 
-		PartialScoreLSSRImproved bestps = new PartialScoreLSSRImproved(values);
-
-		return bestps.computeScore(key.getFpidInput().toString(), infomap);
+		return computeScore(key.getFpidInput().toString(), infomap);
 	}
 
 	public void partialAggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
-
 		partialAggregateG(values);
 	}
 
@@ -278,6 +281,10 @@ public class PartialScoreLSSRImproved implements PartialScore {
 		IOUtils.closeStream(lsmapfile);
 
 		return infomap;
+	}
+	
+	public PartialScoreLSSRImproved clone() {
+		return new PartialScoreLSSRImproved(this);
 	}
 
 

@@ -87,18 +87,11 @@ public class PartialScoreJiangLocal implements PartialScore {
 		computePartialScore(ls, als);
 	}
 	
-	// Parameter constructor. Performs the partialAggregateG operation.
-	public PartialScoreJiangLocal(Iterable<GenericPSWrapper> values) {
-		
-		partialAggregateG(values);
-	}
-	
 	@Override
 	public PartialScoreJiangLocal clone() {
-		PartialScoreJiangLocal ps = new PartialScoreJiangLocal(this);
-		return ps;
+		return new PartialScoreJiangLocal(this);
 	}
-	
+
 	@Override
 	public String toString() {
 		String res = super.toString();
@@ -133,10 +126,8 @@ public class PartialScoreJiangLocal implements PartialScore {
 
 
 	public float aggregateG(PartialScoreKey key, Iterable<GenericPSWrapper> values, Map<?,?> infomap) {
-
-		PartialScoreJiangLocal bestps = new PartialScoreJiangLocal(values);
-
-		return bestps.computeScore();
+		partialAggregateG(values);
+		return computeScore();
 	}
 
 	public Map<?, ?> loadCombinerInfoFile(Configuration conf) {
@@ -184,29 +175,30 @@ public class PartialScoreJiangLocal implements PartialScore {
 
 	public void partialAggregateG(PartialScoreKey key,
 			Iterable<GenericPSWrapper> values, Map<?, ?> infomap) {
-
 		partialAggregateG(values);
 	}
 
 	public void partialAggregateG(Iterable<GenericPSWrapper> values) {
 
+
 		templatesize = 0;
-		
+
 		// Initialize member variables
 		lmatches = new TreeSet<LocalMatch>(Collections.reverseOrder());
 		PartialScoreJiangLocal psj;
-				
+
 		for(GenericPSWrapper ps : values) {
 			psj = (PartialScoreJiangLocal) ps.get();
 			lmatches.addAll(psj.lmatches);
 			templatesize += psj.templatesize; 
 		}
-		
+
 		reduceLmatches();
 	}
 
-	public boolean isEmpty() {
-		return (templatesize == 0 || lmatches.size() == 0);
+	public boolean isEmpty() {		
+		// All the local structures are needed for the consolidation, so they cannot be discarded
+		return false;
 	}
 
 	public PartialScore aggregateSinglePS(PartialScore ps) {
