@@ -17,6 +17,7 @@ object ResultsAnalyzer {
       [--genuine-list path]
       [--impostor-list path]
       [--type {sfinge|nist}]
+      [--origin {hadoop|spark}]
       [--debug]
   """
   
@@ -36,6 +37,8 @@ object ResultsAnalyzer {
                              nextOption(map ++ Map('impostorlist -> value), tail)
       case "--type" :: value :: tail =>
                              nextOption(map ++ Map('type -> value), tail)
+      case "--origin" :: value :: tail =>
+                             nextOption(map ++ Map('origin -> value), tail)
       case "--debug" :: tail =>
                              DEBUG = true
                              nextOption(map, tail)
@@ -68,13 +71,27 @@ object ResultsAnalyzer {
       val genuineList = options.get('genuinelist).get.toString
       val impostorList = options.get('impostorlist).get.toString
       val fptype = options.get('type).get.toString
+      val origin = options.get('origin).get.toString
       
-      val scores : RDD[(String, (String, Float))] = sc.textFile(resultsFile).map({case x =>
-        val aux = x.split("\t")
-        val aux2 = aux(1).split(";")
-        
-        (aux2(1).replaceAll(".xyt$", ""), (aux2(0).replaceAll(".xyt$", ""), aux(0).toFloat))
-      }).persist
+      val text = sc.textFile(resultsFile)
+      
+      var scores : RDD[(String, (String, Float))] = null;
+
+      if(origin == "hadoop") {
+    	  scores = text.map({case x =>
+      	  val aux = x.split("\t")
+      	  val aux2 = aux(1).split(";")
+  
+      	  (aux2(1).replaceAll(".xyt$", ""), (aux2(0).replaceAll(".xyt$", ""), aux(0).toFloat))
+      	  }).persist
+      	  
+      } else if(origin == "spark") {
+    	  scores = text.map({case x =>
+      	  val aux = x.replaceAll("^.*;", "").split(",")
+  
+      	  (aux(1).replace("(", "").replaceAll(".xyt$", ""), (aux(0).replaceAll(".xyt$", ""), aux(2).replace("))", "").toFloat))
+      	  }).persist
+      }
       
       val genuines = sc.textFile(genuineList).map(f => f.replaceAll("^.*/", "").replaceAll(".xyt$", "")).collect.toSet
       val impostors = sc.textFile(impostorList).map(f => f.replaceAll("^.*/", "").replaceAll(".xyt$", "")).collect.toSet
