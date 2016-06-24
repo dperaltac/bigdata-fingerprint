@@ -102,8 +102,15 @@ public class PartialScoreLSSRImproved implements PartialScore {
 
 	public PartialScoreLSSRImproved(PartialScoreLSSRImproved o) {
 
-		tls = new HashMap<Integer, Minutia>(o.tls);
-		lmatches = new TopN<LocalMatch>(o.lmatches);
+		if(o.tls == null)
+			tls = null;
+		else
+			tls = new HashMap<Integer, Minutia>();
+
+		if(o.lmatches == null)
+			lmatches = null;
+		else
+			lmatches = new TopN<LocalMatch>(o.lmatches);
 	}
 
 	// Parameter constructor. Performs the partialAggregate operation.

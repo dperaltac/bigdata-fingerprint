@@ -17,6 +17,8 @@ import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.zookeeper.common.IOUtils;
 
+import sci2s.mrfingerprint.PartialScoreLSSRImproved.LocalMatch;
+
 
 public class PartialScoreLSSR implements PartialScore {
 
@@ -104,9 +106,15 @@ public class PartialScoreLSSR implements PartialScore {
 
 	public PartialScoreLSSR(PartialScoreLSSR o) {
 
-		tls = new HashMap<Integer, Minutia>(o.tls);
-		//		tls = Util.arraycopy(o.tls);
-		lmatches = new TopN<LocalMatch>(o.lmatches);
+		if(o.tls == null)
+			tls = null;
+		else
+			tls = new HashMap<Integer, Minutia>();
+
+		if(o.lmatches == null)
+			lmatches = null;
+		else
+			lmatches = new TopN<LocalMatch>(o.lmatches);
 	}
 
 	// Parameter constructor. Performs the partialAggregate operation.
