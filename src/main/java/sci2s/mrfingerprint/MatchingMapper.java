@@ -57,7 +57,7 @@ public class MatchingMapper extends Mapper<Text, LocalStructure, PartialScoreKey
 		LocalStructure ls = value;
     	
 		GenericPSWrapper gpsw = new GenericPSWrapper();
-		PartialScore ps = pssample.clone();
+		PartialScore ps = pssample;
 		
 		// Find the maximum similarity between that LS and all those from the input fingerprint (partial score)
 		for(LocalStructure[] ilsarray : inputls) {

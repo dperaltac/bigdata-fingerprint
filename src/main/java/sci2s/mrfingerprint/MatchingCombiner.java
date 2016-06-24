@@ -1,6 +1,5 @@
 package sci2s.mrfingerprint;
 import java.io.IOException;
-import java.util.Map;
 
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Reducer;
