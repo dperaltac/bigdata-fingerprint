@@ -31,7 +31,7 @@ public class LocalStructureJiang extends LocalStructure {
 	// Improvements
 	public static final int LOCALBBOX[] = {250, 250, 96};
 	public static final int MINDIST = 0;
-	public static final int MAXDIST = 80;
+	public static final int MAXDIST = 800000;
 
 	protected float[] fvdist;
 	protected byte[] fvangle;
@@ -133,6 +133,7 @@ public class LocalStructureJiang extends LocalStructure {
 	// Improvement: discard neighborhoods where the minutiae are very far or very close
 	@Override
 	public boolean isValid() {
+		
 		for(float d : fvdist)
 			if(d > MAXDIST || d < MINDIST)
 				return false;

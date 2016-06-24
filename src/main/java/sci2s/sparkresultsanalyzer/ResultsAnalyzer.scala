@@ -91,8 +91,17 @@ object ResultsAnalyzer {
       val FAR = 0.0 / 100.0
       
       val numtemplates = impostors.size * 20
+      val farPosition = (FAR*numtemplates*impostors.size).toLong
       
-      val threshold = impostorScores.zipWithIndex.map({case(k,v) => (v,k)}).lookup((FAR*(numtemplates * impostors.size)).toLong)(0)
+      println("Position of the FAR: " + farPosition)
+      
+      val impostorNumericScores = impostorScores.zipWithIndex.map({case(k,v) => (v,k)}).lookup(farPosition)
+      
+      
+      val threshold = if(impostorNumericScores.size == 0)
+        0
+      else
+        impostorNumericScores(0);
       
       print("Treshold: " + threshold)
       
