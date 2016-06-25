@@ -113,20 +113,6 @@ public class PartialScoreLSSRImproved implements PartialScore {
 			lmatches = new TopN<LocalMatch>(o.lmatches);
 	}
 
-	// Parameter constructor. Performs the partialAggregate operation.
-//	public PartialScoreLSSRImproved(Iterable<GenericPSWrapper> values, int nr) {
-//
-//		PartialScoreLSSRImproved psc;
-//		lmatches = new TopN<LocalMatch>(nr);
-//
-//		for(GenericPSWrapper ps : values) {
-//			psc = (PartialScoreLSSRImproved) ps.get();
-//
-//			lmatches.addAll(psc.lmatches);
-//			tls.putAll(psc.tls);
-//		}
-//	}
-
 	public PartialScoreLSSRImproved (LocalStructure ls, LocalStructure[] als) {
 		computePartialScore(ls, als);
 	}

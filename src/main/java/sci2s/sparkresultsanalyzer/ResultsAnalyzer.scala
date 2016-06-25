@@ -93,34 +93,37 @@ object ResultsAnalyzer {
       	  }).persist
       }
       
+      
       val genuines = sc.textFile(genuineList).map(f => f.replaceAll("^.*/", "").replaceAll(".xyt$", "")).collect.toSet
       val impostors = sc.textFile(impostorList).map(f => f.replaceAll("^.*/", "").replaceAll(".xyt$", "")).collect.toSet
       
 
       val genuineScores = scores.filter({case (k,v) => genuines.contains(k)})
-      val impostorScores = scores.filter({case (k,v) => !genuines.contains(k)}).map({case (k1, (k2, score)) => score}).sortBy(v => v, ascending=true)
+      val impostorScores = scores.filter({case (k,v) => !genuines.contains(k)}).mapValues({ case (k,v) => v }).reduceByKey(Math.min(_,_)).values
+      
+          
+      //.map({case (k1, (k2, score)) => score}).sortBy(v => v, ascending=true)
       
 //      println(" " + genuineScores.count() + " " + impostorScores.count())
       
       
       //val threshold = impostorScores.reduce(Math.min(_,_))
       
-      val FAR = 0.0 / 100.0
+      val FAR = 0 / 100.0
       
       val numtemplates = impostors.size * 20
-      val farPosition = (FAR*numtemplates*impostors.size).toLong
+      val farPosition = ((1-FAR)*impostors.size).toLong - 1
       
       println("Position of the FAR: " + farPosition)
       
       val impostorNumericScores = impostorScores.zipWithIndex.map({case(k,v) => (v,k)}).lookup(farPosition)
-      
       
       val threshold = if(impostorNumericScores.size == 0)
         0
       else
         impostorNumericScores(0);
       
-      print("Treshold: " + threshold)
+      println("Treshold: " + threshold)
       
       val bestGenuineScores = genuineScores.filter({case (k1, (k2, score)) => (score > threshold)}).reduceByKey({
         case ((t1, s1), (t2, s2)) =>

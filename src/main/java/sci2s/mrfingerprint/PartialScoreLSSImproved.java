@@ -13,17 +13,20 @@ public class PartialScoreLSSImproved implements PartialScore {
 
 	protected float [] bestsimilarities;
 
-	public static final int AVGNP = 5; //!< My arbitrary value for n_P
+	public static final int AVGNP = 10;
 
 	public PartialScoreLSSImproved() {
 
-		bestsimilarities = new float[0];
+		bestsimilarities = null;
 
 	}
 
 	public PartialScoreLSSImproved(PartialScoreLSSImproved o) {
 
-		bestsimilarities = Arrays.copyOf(o.bestsimilarities, o.bestsimilarities.length);
+		if(o.bestsimilarities == null)
+			bestsimilarities = null;
+		else
+			bestsimilarities = Arrays.copyOf(o.bestsimilarities, o.bestsimilarities.length);
 
 	}
 
@@ -48,7 +51,7 @@ public class PartialScoreLSSImproved implements PartialScore {
 
 	public void readFields(DataInput in) throws IOException {
 
-		ArrayPrimitiveWritable auxaw = new ArrayPrimitiveWritable(bestsimilarities);
+		ArrayPrimitiveWritable auxaw = new ArrayPrimitiveWritable();
 		auxaw.readFields(in);
 		bestsimilarities = (float[]) auxaw.get();
 	}
@@ -104,9 +107,13 @@ public class PartialScoreLSSImproved implements PartialScore {
 					best.add(sl);
 		}
 
-		bestsimilarities = new float[best.size()];
-		for(int i = 0; i < bestsimilarities.length; ++i)
-			bestsimilarities[i] = best.poll();
+		if(best.size() == 0)
+			bestsimilarities = null;
+		else {
+			bestsimilarities = new float[best.size()];
+			for(int i = 0; i < bestsimilarities.length; ++i)
+				bestsimilarities[i] = best.poll();			
+		}
 	}
 
 
@@ -142,9 +149,14 @@ public class PartialScoreLSSImproved implements PartialScore {
 			}
 		}
 
-		bestsimilarities = new float[gamma.size()];
-		for(int i = 0; i < bestsimilarities.length; ++i)
-			bestsimilarities[i] = gamma.poll();
+		if(gamma.size() == 0)
+			bestsimilarities = null;
+		else
+		{
+			bestsimilarities = new float[gamma.size()];
+			for(int i = 0; i < bestsimilarities.length; ++i)
+				bestsimilarities[i] = gamma.poll();
+		}
 	}
 
 	public Map<?, ?> loadCombinerInfoFile(Configuration conf) {
@@ -173,7 +185,7 @@ public class PartialScoreLSSImproved implements PartialScore {
 			bestsimilarities = ArrayUtils.addAll(bestsimilarities, psc.bestsimilarities);				
 		}
 		else {
-			bestsimilarities = new float[0];
+			bestsimilarities = null;
 		}
 
 		return this;

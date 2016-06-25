@@ -10,7 +10,8 @@ public class MatchingMapper extends Mapper<Text, LocalStructure, PartialScoreKey
 	protected LocalStructure[][] inputls;
 	protected PartialScore pssample;
 
-	protected PartialScoreKey psk = new PartialScoreKey();
+	protected PartialScoreKey psk;
+	protected GenericPSWrapper gpsw;
 	
 	static enum MapCountersEnum { TOTAL_MAP_MILLIS , TOTAL_MAPTASK_MILLIS , MAPTASK_NUMBER }
 	
@@ -35,6 +36,9 @@ public class MatchingMapper extends Mapper<Text, LocalStructure, PartialScoreKey
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+    	
+		gpsw = new GenericPSWrapper(pssample);
+		psk = new PartialScoreKey();
 
 		counter_map_millis = context.getCounter(MapCountersEnum.class.getName(),
 				MapCountersEnum.TOTAL_MAP_MILLIS.toString());
@@ -52,25 +56,21 @@ public class MatchingMapper extends Mapper<Text, LocalStructure, PartialScoreKey
 	throws IOException, InterruptedException {
 		
 		long init_time = System.currentTimeMillis();
-
-		// De-serialize the LocalStructure in "value"
-		LocalStructure ls = value;
-    	
-		GenericPSWrapper gpsw = new GenericPSWrapper();
-		PartialScore ps = pssample;
+		
+		psk.setFpid(value.getFpid());
 		
 		// Find the maximum similarity between that LS and all those from the input fingerprint (partial score)
 		for(LocalStructure[] ilsarray : inputls) {
 
 			// Compute the partial score for this input fingerprint
-			ps.computePartialScore(ls, ilsarray);
+			pssample.computePartialScore(value, ilsarray);
 
-			if(!ps.isEmpty())
+			if(!pssample.isEmpty())
 			{
-				gpsw.set(ps);
+//				gpsw.set(pssample);
 
 				// Output key
-				psk.set(ls.getFpid(), ilsarray[0].getFpid());
+				psk.setFpidInput(ilsarray[0].getFpid());
 				context.write(psk, gpsw);
 			}
 		}

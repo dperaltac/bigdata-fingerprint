@@ -37,6 +37,14 @@ public class PartialScoreKey implements WritableComparable<PartialScoreKey> {
 		this.fpid_input.set(fpid_input);
 	}
 	
+	public void setFpid(String fpid) {
+		this.fpid.set(fpid);
+	}
+	
+	public void setFpidInput(String fpid_input) {
+		this.fpid_input.set(fpid_input);
+	}
+	
 	@Override
 	public String toString() {
 		

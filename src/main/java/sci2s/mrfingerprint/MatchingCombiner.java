@@ -8,6 +8,7 @@ public class MatchingCombiner extends Reducer<PartialScoreKey, GenericPSWrapper,
 	
 //	protected Map<?,?> infomap;
 	protected PartialScore pssample;
+	protected GenericPSWrapper gpsw;
 	
 	static enum CombinerCountersEnum {
 		TOTAL_COMBINER_MILLIS ,
@@ -34,6 +35,8 @@ public class MatchingCombiner extends Reducer<PartialScoreKey, GenericPSWrapper,
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		gpsw = new GenericPSWrapper(pssample);
 //		infomap = pssample.loadCombinerInfoFile(context.getConfiguration());
 
 		counter_combiner_millis = context.getCounter(CombinerCountersEnum.class.getName(),
@@ -63,8 +66,9 @@ public class MatchingCombiner extends Reducer<PartialScoreKey, GenericPSWrapper,
 		pssample.partialAggregateG(values);
 
 		// Insert the score + fpid into the output
-		if(pssample != null && !pssample.isEmpty())
-			context.write(key, new GenericPSWrapper(pssample));
+		if(pssample != null && !pssample.isEmpty()) {
+			context.write(key, gpsw);
+		}
 
         counter_combiner_millis.increment(System.currentTimeMillis() - init_time);
         counter_combiner_number.increment(1);
