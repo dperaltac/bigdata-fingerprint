@@ -12,6 +12,8 @@ import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.util.SizeEstimator
+import org.apache.log4j.Logger
+import org.apache.log4j.Level
 
 import scala.collection.JavaConverters._
 import scala.collection.Iterable
@@ -65,6 +67,9 @@ object SparkMatcherLSSImproved {
   
 
 	def main(args: Array[String]): Unit = {
+      
+      Logger.getLogger("org").setLevel(Level.OFF)
+      Logger.getLogger("akka").setLevel(Level.OFF)
    
       if (args.length == 0) {
         println(usage)
@@ -103,13 +108,19 @@ object SparkMatcherLSSImproved {
 			// Read template database
 			val templateLS = sc.sequenceFile[String, LocalStructureCylinder](templateFile) //.partitionBy(new HashPartitioner(numPartitions))
           .mapValues(new LocalStructureCylinder(_))
+          
+      var timeTemplates = 0.0
+      var timeInputs = 0.0
+      var timePS = 0.0
 
 			// FOR DEBUGGING
       if(DEBUG) {
-		    println("Number of template LS: %s".format(templateLS.count()))
+		    println("Number of template LS: %s".format(templateLS.persist.count()))
         
-        printSize("Template size: ", templateLS.collect())
-		    println("Time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
+//        printSize("Template size: ", templateLS.collect())
+		    
+		    timeTemplates = System.currentTimeMillis;
+		    println("Time to load templates: %g".format((timeTemplates - initialtime)/1000.0))
       }
 
 			// Read input fingerprint(s)
@@ -121,20 +132,23 @@ object SparkMatcherLSSImproved {
 
 			// FOR DEBUGGING
       if(DEBUG) {
-        println("Number of input LS: %s".format(inputLSRDD.count))
-        printSize("LS size: ", inputLSRDD.collect())
-		    println("Time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
+        println("Number of input LS: %s".format(inputLS.value.length))
+//        printSize("LS size: ", inputLSRDD.collect())
+		    timeInputs = System.currentTimeMillis;
+		    println("Time to load input: %g".format((timeInputs - timeTemplates)/1000.0))
       }
       
       // Compute the partial scores for each template ls
       val partialscores = computeScores(templateLS, inputLS)
       
       if(DEBUG) {
-        println("Number of scores: %s".format(partialscores.count()))
-        println("Partial scores computed. Time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
-        printSize("Partial score size: ", partialscores.collect())
-        println("\tPartial score sample: " + partialscores.first)
-        println("Time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
+        println("Number of scores: %s".format(partialscores.persist.count()))
+
+		    timePS = System.currentTimeMillis;
+        println("Time to compute the matching: %g".format((timePS - timeInputs)/1000.0))
+//        printSize("Partial score size: ", partialscores.collect())
+//        println("\tPartial score sample: " + partialscores.first)
+//        println("Time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
 //        partialscores.sortBy({case (k,v) => v}).foreach(println(_))
       }
       
@@ -143,6 +157,7 @@ object SparkMatcherLSSImproved {
       partialscores.saveAsTextFile(outputDir)
       
       // Print time
+      if(DEBUG) println("Time to save: %g".format((System.currentTimeMillis - timePS)/1000.0))
       println("Total time: %g".format((System.currentTimeMillis - initialtime)/1000.0))
 	}
 
@@ -165,12 +180,12 @@ object SparkMatcherLSSImproved {
         }
       })
       
-      if(DEBUG) {
-        val tmp = scores.collect()
-        printSize("Partitioned partial scores size: ", tmp)
-        println("\tPartitioned partial score number: " + tmp.size)
-        println("\tPartitioned partial score sample: " + tmp(0))
-      }
+//      if(DEBUG) {
+//        val tmp = scores.collect()
+//        printSize("Partitioned partial scores size: ", tmp)
+//        println("\tPartitioned partial score number: " + tmp.size)
+//        println("\tPartitioned partial score sample: " + tmp(0))
+//      }
       
       scores
   }
