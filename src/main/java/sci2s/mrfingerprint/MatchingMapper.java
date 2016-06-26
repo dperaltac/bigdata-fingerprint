@@ -13,7 +13,7 @@ public class MatchingMapper extends Mapper<Text, LocalStructure, PartialScoreKey
 	protected PartialScoreKey psk;
 	protected GenericPSWrapper gpsw;
 	
-	static enum MapCountersEnum { TOTAL_MAP_MILLIS , TOTAL_MAPTASK_MILLIS , MAPTASK_NUMBER }
+	static enum MapCountersEnum { TOTAL_MAP_MILLIS , TOTAL_MAPTASK_MILLIS , MAPTASK_NUMBER , MAPFILE_MILLIS}
 	
 	Counter counter_map_millis;
 	Counter counter_maptask_millis;
@@ -26,6 +26,11 @@ public class MatchingMapper extends Mapper<Text, LocalStructure, PartialScoreKey
 		maptask_init_time = System.currentTimeMillis();
 
 		inputls = LocalStructure.loadLSMapFile(context.getConfiguration());
+
+		Counter counter_mapfile_millis = context.getCounter(MapCountersEnum.class.getName(),
+				MapCountersEnum.MAPFILE_MILLIS.toString());
+		
+		counter_mapfile_millis.increment(System.currentTimeMillis()-maptask_init_time);
 
 		try {
 			pssample = (PartialScore) Util.getClassFromProperty(context, "PartialScore").newInstance();

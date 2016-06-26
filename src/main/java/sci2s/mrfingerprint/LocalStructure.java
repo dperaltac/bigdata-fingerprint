@@ -14,11 +14,11 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.zookeeper.common.IOUtils;
@@ -391,18 +391,21 @@ public abstract class LocalStructure implements WritableComparable<LocalStructur
 	public static <T extends LocalStructure> LocalStructure [][] loadLSMapFile(Configuration conf) {
 
 		String name = conf.get(Util.MAPFILENAMEPROPERTY, Util.MAPFILEDEFAULTNAME);
+		int length = Integer.parseInt(conf.get(Util.MAPFILELENGTHPROPERTY));
     	MapFile.Reader lsmapfile = Util.createMapFileReader(conf, name);
     	
-    	LocalStructure [][] result = null;
-
+    	LocalStructure [][] result = new LocalStructure[length][];
+    	int i = 0;
+    	
 		WritableComparable<?> key = (WritableComparable<?>) ReflectionUtils.newInstance(lsmapfile.getKeyClass(), conf);
 
 		ArrayWritable value = (ArrayWritable) ReflectionUtils.newInstance(lsmapfile.getValueClass(), conf);
 		
 		try {
 			while(lsmapfile.next(key, value)) {
-				result = (LocalStructure [][]) ArrayUtils.add(result,
-						Arrays.copyOf(value.get(), value.get().length, LocalStructure[].class));
+				Writable [] aw = value.get();
+				result[i] = (LocalStructure []) Arrays.copyOf(aw, aw.length, LocalStructure[].class);
+				i++;
 			}
 		} catch (Exception e) {
 			System.err.println("LocalStructure.loadLSMapFile: unable to read fingerprint "
