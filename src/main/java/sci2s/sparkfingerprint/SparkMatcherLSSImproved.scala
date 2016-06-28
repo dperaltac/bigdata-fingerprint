@@ -67,9 +67,6 @@ object SparkMatcherLSSImproved {
   
 
 	def main(args: Array[String]): Unit = {
-      
-      Logger.getLogger("org").setLevel(Level.OFF)
-      Logger.getLogger("akka").setLevel(Level.OFF)
    
       if (args.length == 0) {
         println(usage)
@@ -125,7 +122,7 @@ object SparkMatcherLSSImproved {
 
 			// Read input fingerprint(s)
 	    val inputLSRDD = sc.sequenceFile[String, LSCylinderArray](mapFileName)
-        .mapValues(new LSCylinderArray(_).get().map(_.asInstanceOf[LocalStructureCylinder]))
+        .mapValues(new LSCylinderArray(_).get().map(_.asInstanceOf[LocalStructureCylinder]).filter(_.isValid))
       
       // Broadcast the input fingerprint(s)
       val inputLS = sc.broadcast(inputLSRDD.collect())
@@ -174,7 +171,7 @@ object SparkMatcherLSSImproved {
           // For each template LS, compute the partial score with the input fingerprint ilsarray
           val score = tlsarray.map ({ ls =>
             new PartialScoreLSSImproved(ls, ils._2.asInstanceOf[Array[LocalStructure]])
-            }).filter(! _.isEmpty).reduce(_.aggregateSinglePS(_).asInstanceOf[PartialScoreLSSImproved]).computeScore()
+            }).filter(! _.isEmpty).fold(new PartialScoreLSSImproved())(_.aggregateSinglePS(_).asInstanceOf[PartialScoreLSSImproved]).computeScore()
             
           (ils._1, score)
         }

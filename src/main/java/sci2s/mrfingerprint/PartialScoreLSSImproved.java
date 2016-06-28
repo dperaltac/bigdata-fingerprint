@@ -175,7 +175,16 @@ public class PartialScoreLSSImproved implements PartialScore {
 
 		PartialScoreLSSImproved psc = (PartialScoreLSSImproved) ps;
 
-		if(psc.bestsimilarities.length + bestsimilarities.length > AVGNP) {
+		if(bestsimilarities == null && psc.bestsimilarities == null) {
+			bestsimilarities = null;
+		}
+		else if(bestsimilarities == null) {
+			bestsimilarities = Arrays.copyOf(psc.bestsimilarities, psc.bestsimilarities.length);
+		}
+		else if(psc.bestsimilarities == null) {
+			return this;
+		}
+		else if(psc.bestsimilarities.length + bestsimilarities.length > AVGNP) {
 			TopN<Float> topn = new TopN<Float>(ArrayUtils.toObject(bestsimilarities), AVGNP);
 			topn.addAll(ArrayUtils.toObject(psc.bestsimilarities));
 

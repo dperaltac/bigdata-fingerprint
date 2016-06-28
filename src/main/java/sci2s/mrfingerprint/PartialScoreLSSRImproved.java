@@ -442,6 +442,7 @@ public class PartialScoreLSSRImproved implements PartialScore {
 		Integer [] besteffidx = Util.sortIndexes(efficiency);
 
 		sum = 0.0f;
+		np = Math.min(np, nr);
 
 		for (int i=0; i<np; i++)
 			sum += lambdaT[besteffidx[nr-i-1]];
