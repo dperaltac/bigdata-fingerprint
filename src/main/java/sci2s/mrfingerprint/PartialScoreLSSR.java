@@ -17,8 +17,6 @@ import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.zookeeper.common.IOUtils;
 
-import sci2s.mrfingerprint.PartialScoreLSSRImproved.LocalMatch;
-
 
 public class PartialScoreLSSR implements PartialScore {
 

@@ -62,6 +62,9 @@ public class MatchingMapper extends Mapper<Text, LocalStructure, PartialScoreKey
 		
 		long init_time = System.currentTimeMillis();
 		
+		if(!value.isValid())
+			return;
+		
 		psk.setFpid(value.getFpid());
 		
 		// Find the maximum similarity between that LS and all those from the input fingerprint (partial score)

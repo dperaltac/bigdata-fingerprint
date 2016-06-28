@@ -361,7 +361,7 @@ public class LocalStructureCylinder extends LocalStructure {
 
 	@Override
 	public boolean isValid() {
-		return (norm != -1);
+		return (norm >= 0);
 	}
 	
 	
@@ -377,6 +377,9 @@ public class LocalStructureCylinder extends LocalStructure {
 			throw new LSException("The similarity can only be computed for local structures of the same type");
 		
 		LocalStructureCylinder lsc = (LocalStructureCylinder) ls;
+		
+		if(norm < 0 || lsc.norm < 0)
+			return -1;
 
 		if (Math.abs(Util.dFi256(minutia.getbT(),lsc.minutia.getbT())) > DELTAZETABYTE)
 			return 0;
